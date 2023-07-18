@@ -5,9 +5,7 @@ const upload = async (req, res) => {
     try {
         if (req.file !== undefined) {
             res.status(200).send({
-                data: {
-                    file: req.file.originalname
-                },
+                file: req.file.originalname,
                 message: "Uploaded the file successfully: " + req.file.originalname,
             });
         }

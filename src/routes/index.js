@@ -5,8 +5,8 @@ const router = express.Router();
 const UploadRoute = require("./fileUpload");
 const UserRoute = require('./userRoutes')
 
-router.use('/uploads', UploadRoute);
-router.use('/users', UserRoute)
+router.use('/files', UploadRoute);
+router.use('/user', UserRoute)
 
 
 module.exports = router;
