@@ -24,11 +24,8 @@ method.register = async (req, res) => {
         if (!verifiedEmail) {
             const hashedPassword = await bcrypt.hash(req.body.password, 10)
             const data = await loginInterface.createUser({
-                username: req.body.username,
                 email: req.body.email,
                 password: hashedPassword,
-                mobile: req.body.mobile,
-                status: req.body.status,
             });
             const authToken = jwt.sign({ user: data.id }, process.env.SECRETKEY)
             res.status(200).json({
@@ -63,7 +60,7 @@ method.logInUser = async (req, res) => {
         if (verifiedPassword) {
             const authToken = jwt.sign({ user: verifiedEmail.id }, process.env.SECRETKEY)
             res.status(200).json({
-                data: {id: verifiedEmail.id, username: verifiedEmail.username, email: verifiedEmail.email, module: verifiedEmail.mobile, status: verifiedEmail.status },
+                data: {id: verifiedEmail.id, email: verifiedEmail.email },
                 token: authToken,
                 message: "user Login successfully",
             })
