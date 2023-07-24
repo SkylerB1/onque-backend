@@ -1,7 +1,7 @@
 const Sequelize = require("sequelize");
 
 const db = new Sequelize("jjmedia_fe", "root", "", {
-  host: process.env.HOST,
+  host: "localhost",
   dialect: "mysql"
 });
 
