@@ -16,7 +16,9 @@ var validator = (schema, source) => (
         if (!error) return next();
         const { details } = error;
         const message = details.map((i) => i.message.replace(/['"]+/g, '')).join(',');
-        res.json({message})
+        res.status(400).json({
+            message: message,
+        })
         // next();
 
     } catch (error) {
