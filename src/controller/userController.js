@@ -73,4 +73,34 @@ method.logInUser = async (req, res) => {
     }
 }
 
+method.facebooklogin = async (req, res) => {
+    const {userID, accessToken} = req.body;
+
+    let urlGraphFacebook = `https://graph.facebook.com/v17.0/${userID}/accounts?fields=id,name,email&access_token=${accessToken} `
+    fetch(urlGraphFacebook, {
+        method: 'GET'
+    })
+    .then(res => res.json())
+    .then(res => {
+        const email = res;
+        const verifiedEmail = loginInterface.checkEmail(email); 
+        if (!verifiedEmail) {
+            const hashedPassword =  bcrypt.hash(Math.random().toString(36).slice(-8), 10)
+            const data =  loginInterface.createUser({
+                email: req.body.email,
+                password: hashedPassword,
+            });
+            const authToken = jwt.sign({ user: data.id }, process.env.SECRETKEY)
+            res.status(200).json({
+                data: data,
+                token: authToken,
+                message: "user created successfully",
+            })
+
+        } else {
+            res.status(400).json({ message: "Something went wrong" })
+        }
+    })
+}
+
 module.exports = method
