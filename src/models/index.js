@@ -4,7 +4,7 @@ const db = require("../config/db.config");
 const Users = require("./Users");
 
 db.sync({alter: false}).then(() => {
-    console.log('Sync has been done...');
+    console.log('db connected');
 }).catch((error) => {
     console.error('Unable to sync table : ', error);
 });
