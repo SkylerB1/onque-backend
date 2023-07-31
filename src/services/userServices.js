@@ -1,5 +1,7 @@
 const db = require("../config/db.config");
 const Users = require("../models/Users");
+const SocialMediaToken = require("../models/SocialMediaToken");
+
 
 
 class UserService {
@@ -21,6 +23,20 @@ class UserService {
 
     async logInUser() {
         // backend query
+    }
+
+    async checkId (id) {
+        return SocialMediaToken.findOne({
+            where: {
+                id: id
+            }
+        })
+    }
+
+    async setMediaToken (data) {
+        return SocialMediaToken.create(
+            data
+        )
     }
 }
 
