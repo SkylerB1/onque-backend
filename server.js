@@ -11,7 +11,7 @@ require("./src/models/index");
 global._basedir = __dirname;
 
 var corsOptions = {
-    origin: "http://localhost:8081"
+    origin: "*"
 };
 
 app.use(cors(corsOptions));
