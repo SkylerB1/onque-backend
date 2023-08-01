@@ -4,6 +4,7 @@ const loginInterface = new UserService();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Users = require("../models/Users");
+var request = require("request");
 
 const method = {}
 
@@ -60,7 +61,7 @@ method.logInUser = async (req, res) => {
         if (verifiedPassword) {
             const authToken = jwt.sign({ user: verifiedEmail.id }, process.env.SECRETKEY)
             res.status(200).json({
-                data: {id: verifiedEmail.id, email: verifiedEmail.email },
+                data: { id: verifiedEmail.id, email: verifiedEmail.email },
                 token: authToken,
                 message: "user Login successfully",
             })
@@ -73,34 +74,78 @@ method.logInUser = async (req, res) => {
     }
 }
 
-method.facebooklogin = async (req, res) => {
-    const {userID, accessToken} = req.body;
+method.facebooklogin = async (req, res) => {   
+    try {
+        const { accessToken, userId, platform } = req.body;
 
-    let urlGraphFacebook = `https://graph.facebook.com/v17.0/${userID}/accounts?fields=id,name,email&access_token=${accessToken} `
-    fetch(urlGraphFacebook, {
-        method: 'GET'
-    })
-    .then(res => res.json())
-    .then(res => {
-        const email = res;
-        const verifiedEmail = loginInterface.checkEmail(email); 
-        if (!verifiedEmail) {
-            const hashedPassword =  bcrypt.hash(Math.random().toString(36).slice(-8), 10)
-            const data =  loginInterface.createUser({
-                email: req.body.email,
-                password: hashedPassword,
+        const id = await loginInterface.checkId(userId)
+        if (!id) {
+            const data = await loginInterface.setMediaToken({
+                id: userId,
+                platform: platform,
+                oauth_token: accessToken,
             });
-            const authToken = jwt.sign({ user: data.id }, process.env.SECRETKEY)
             res.status(200).json({
                 data: data,
-                token: authToken,
                 message: "user created successfully",
             })
-
-        } else {
-            res.status(400).json({ message: "Something went wrong" })
+        }else {
+            res.status(400).json({ message: "user already exist" })
         }
-    })
+    } catch (err) {
+        res.status(500).json({
+            message: err.message
+        })
+
+    }
 }
+
+method.twitterLogin = (req, res) => {
+    request.post(
+        {
+            url: "https://api.twitter.com/oauth/request_token",
+            oauth: {
+                oauth_callback: process.env.LOCAL_OAUTH_CALLBACKURL,
+                consumer_key: process.env.OTHER_TWITTER__CONSUMER_KEY,
+                consumer_secret: process.env.OTHER_TWITTER_CONSUMER_SECRET,
+            },
+        },
+        function (err, r, body) {
+            if (err) {
+                return res.send(500, { message: e.message });
+            }
+            var jsonStr =
+                '{ "' + body.replace(/&/g, '", "').replace(/=/g, '": "') + '"}';
+            res.send(JSON.parse(jsonStr));
+        }
+    );
+}
+
+method.setUserToken = async (req, res) => {
+    try {
+        const { accessToken, userId, platform } = req.body;
+
+        const id = await loginInterface.checkId(userId)
+        if (!id) {
+            const data = await loginInterface.setMediaToken({
+                id: userId,
+                platform: platform,
+                oauth_token: accessToken,
+            });
+            res.status(200).json({
+                data: data,
+                message: "user created successfully",
+            })
+        }else {
+            res.status(400).json({ message: "user already exist" })
+        }
+    } catch (err) {
+        res.status(500).json({
+            message: err.message
+        })
+
+    }
+}
+
 
 module.exports = method
