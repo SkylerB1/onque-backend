@@ -194,6 +194,7 @@ method.twitterPost = async (req, res) => {
         return Math.floor(Date.now() / 1000);
     }
     const oauthTimestamp = generateOAuthTimestamp();
+    console.log(oauthTimestamp)
     //END
 
     //for oauth_signature
@@ -231,28 +232,31 @@ method.twitterPost = async (req, res) => {
 
     const baseString = `${encodedHTTPMethod}&${encodedBaseURL}&${encodedQueryParams}&${encodedOAuthParams}`;
 
-    console.log(baseString)
-    const signingKey = process.env.TWITTER__CONSUMER_KEY + '&' + accessTokenSecret;
+    // console.log(baseString)
+    const signingKey = process.env.TWITTER_CONSUMER_SECRET + '&' + accessTokenSecret;
 
     const signature = generateOAuthSignature(baseString, signingKey);
-    console.log('OAuth Signature:', signature);
-   // END
+    // console.log('OAuth Signature:', signature);
+    // END
 
-    // const tweetData = {
-    //     text: req.body.text,
-    // };
+    const tweetData = {
+        text: req.body.text,
+    };
 
-    // axios.post(apiUrl, tweetData, {
-    //     headers: {
-    //         'Authorization': `OAuth oauth_consumer_key=${process.env.TWITTER__CONSUMER_KEY},oauth_token=${req.body.accessToken},oauth_signature_method="HMAC-SHA1",oauth_timestamp=${oauthTimestamp},oauth_nonce=${randomBase64Data},oauth_signature=${signature}, oauth_version="1.0"`,
-    //     }
-    // })
-    //     .then(response => {
-    //         console.log('Tweet posted successfully:', response.data);
-    //     })
-    //     .catch(error => {
-    //         console.error('Error posting tweet:', error);
-    //     });
+    axios.post(apiUrl, tweetData, {
+        headers: {
+
+            'Content-Type': 'application/json',
+            'Authorization': `OAuth oauth_consumer_key="EegqszBrWDI9dRY8gJ0FMYMIt",oauth_token="${req.body.accessToken}",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1691155260",oauth_nonce="1zN3LoHXnhJ",oauth_version="1.0",oauth_signature="yiF85yWbO4qUdhigwLUnx9zG7cE%3D"`,
+            'Cookie': 'guest_id=v1%3A169097582497377431'
+        }
+    })
+        .then(response => {
+            console.log('Tweet posted successfully:', response.data);
+        })
+        .catch(error => {
+            console.error('Error posting tweet:', error);
+        });
 }
 
 
