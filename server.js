@@ -11,7 +11,7 @@ require("./src/models/index");
 global._basedir = __dirname;
 
 var corsOptions = {
-    origin: "*"
+  origin: "*"
 };
 
 app.use(cors(corsOptions));
@@ -19,14 +19,15 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 // global-route
-// app.use("/api", router);
+app.use("/api", router);
 
-app.use((req, res, next) => {
-    if (req.protocol === 'http') {
-        return res.redirect(302, `https://${req.headers.host}${req.url}`);
-    }
-    next();
-});
+// app.use((req, res, next) => {
+//     if (req.protocol === 'http') {
+//         console.log(`https://${req.headers.host}${req.url}`)
+//         return res.redirect(302, `https://${req.headers.host}${req.url}`);
+//     }
+//     next();
+// });
 
 
 app.listen(process.env.PORT, () => {

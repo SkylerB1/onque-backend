@@ -1,7 +1,8 @@
 const db = require("../config/db.config");
 const Users = require("../models/Users");
 const SocialMediaToken = require("../models/SocialMediaToken");
-
+const PostData = require("../models/PostData");
+const MediaFile = require("../models/mediaFile");
 
 
 class UserService {
@@ -38,6 +39,27 @@ class UserService {
             data
         )
     }
+
+    async storePostData(data) {
+        // backend query
+        return PostData.create(
+            data
+        )
+    }
+
+    async uploadMediaFile(data) {
+        return MediaFile.create(
+            data
+        )
+    }
+
+    // async checkId (id) {
+    //     return SocialMediaToken.findOne({
+    //         where: {
+    //             id: id
+    //         }
+    //     })
+    // }
 }
 
 module.exports = UserService;
