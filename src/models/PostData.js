@@ -16,14 +16,18 @@ const PostData = db.define("postData", {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    files: {
+        type: DataTypes.JSON,
+        allowNull: true,
+    },
     platform: {
         type: DataTypes.STRING,
         allowNull: false,
     },
     status: {
-        type: DataTypes.ENUM,
+        type:   DataTypes.ENUM,
         values: ['published', 'pending']
-    },
+      },
     createdAt: {
         type: DataTypes.DATE,
         allowNull: true

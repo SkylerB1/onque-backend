@@ -110,8 +110,8 @@ method.twitterLogin = (req, res) => {
             url: "https://api.twitter.com/oauth/request_token",
             oauth: {
                 oauth_callback: process.env.OAUTH_CALLBACKURL,
-                consumer_key: process.env.TWITTER__CONSUMER_KEY,
-                consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+                consumer_key: process.env.OTHER_TWITTER__CONSUMER_KEY,
+                consumer_secret: process.env.OTHER_TWITTER_CONSUMER_SECRET,
             },
         },
         function (err, r, body) {
@@ -180,7 +180,7 @@ method.twitterPost = async (req, res) => {
         appSecret: "IJYArxAxOs5p0oaBNrcyYIqROZ8ZWEAuT2GYcNJifGAuP3xQag",
         accessToken: req.body.accessToken,
         accessSecret: req.body.accessTokenSecret,
-        bearerToken: "AAAAAAAAAAAAAAAAAAAAAGwEpAEAAAAAvv29%2Bqg59ZhC9j9YsmfVXtR9SHk%3Do5mgkyL3JVcveruJ5fPgGMEwZDoAquiZV6QeTCAVmb37qHWsdj",
+        bearerToken: "AAAAAAAAAAAAAAAAAAAAAIBJpAEAAAAAbH3c2R%2FhK7y9J%2FeAR4raGZAtYiU%3D1RyNDwnJS7QraHViRkhRf3Lg3DoSIxJCv1bshti4u7o0axuHdQ",
     });
 
     const rwClient = client.readWrite;
