@@ -22,5 +22,10 @@ let uploadFile = multer({
     },
 }).single("file");
 
+let uploadMultipleFile = multer({
+    storage: storage,
+}).array("files", 5);
+
 let uploadFileMiddleware = util.promisify(uploadFile);
+let uploadMultpleFileMiddleware = util.promisify(uploadMultipleFile);
 module.exports = uploadFileMiddleware;

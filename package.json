@@ -34,6 +34,6 @@
     "request": "^2.88.2",
     "sequelize": "^6.32.1",
     "twit": "^2.2.11",
-   "type": "module"
+    "twitter-api-v2": "^1.15.1"
   }
 }

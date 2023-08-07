@@ -8,6 +8,7 @@ var request = require("request");
 const { default: axios } = require("axios");
 const crypto = require('crypto');
 const _ = require('lodash');
+const { TwitterApi } = require("twitter-api-v2");
 
 const method = {}
 
@@ -109,8 +110,8 @@ method.twitterLogin = (req, res) => {
             url: "https://api.twitter.com/oauth/request_token",
             oauth: {
                 oauth_callback: process.env.OAUTH_CALLBACKURL,
-                consumer_key: process.env.TWITTER__CONSUMER_KEY,
-                consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+                consumer_key: process.env.OTHER_TWITTER__CONSUMER_KEY,
+                consumer_secret: process.env.OTHER_TWITTER_CONSUMER_SECRET,
             },
         },
         function (err, r, body) {
@@ -172,92 +173,45 @@ method.setUserToken = async (req, res) => {
 }
 
 method.twitterPost = async (req, res) => {
-    const accessTokenSecret = req.body.accessTokenSecret;
+    const text = req.body.text;
 
-    const apiUrl = 'https://api.twitter.com/2/tweets';
+    const client = new TwitterApi({
+        appKey: "EsjCJaczKFyzdaBLfSoe36YMh",
+        appSecret: "IJYArxAxOs5p0oaBNrcyYIqROZ8ZWEAuT2GYcNJifGAuP3xQag",
+        accessToken: req.body.accessToken,
+        accessSecret: req.body.accessTokenSecret,
+        bearerToken: "AAAAAAAAAAAAAAAAAAAAAIBJpAEAAAAAbH3c2R%2FhK7y9J%2FeAR4raGZAtYiU%3D1RyNDwnJS7QraHViRkhRf3Lg3DoSIxJCv1bshti4u7o0axuHdQ",
+    });
 
-    //for oauth_nonce
-    function generateRandomBase64String(length) {
-        const randomBytes = crypto.randomBytes(length);
-        const base64String = randomBytes.toString('base64');
+    const rwClient = client.readWrite;
+    const mediaTweet = async () => {
+        try {
 
-        // Strip out non-word characters using lodash
-        const strippedString = _.replace(base64String, /\W/g, '');
+            // Create mediaID 
+            // const mediaId = await client.v1.uploadMedia(
 
-        return strippedString;
-    }
-    const randomBase64Data = generateRandomBase64String(32);
-    //END
+            //     // Put path of image you wish to post
+            //     "./1605232393098780672example.png"
+            // );
 
-    //for oauth_timestamp
-    function generateOAuthTimestamp() {
-        return Math.floor(Date.now() / 1000);
-    }
-    const oauthTimestamp = generateOAuthTimestamp();
-    console.log(oauthTimestamp)
-    //END
-
-    //for oauth_signature
-    function percentEncode(value) {
-        return encodeURIComponent(value).replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
-    }
-
-    function calculateHmacSha1(signatureBaseString, signingKey) {
-        const hmac = crypto.createHmac('sha1', signingKey);
-        hmac.update(signatureBaseString);
-        return hmac.digest('base64');
-    }
-
-    function generateOAuthSignature(baseString, signingKey) {
-        const hmac = crypto.createHmac('sha1', signingKey);
-        hmac.update(baseString);
-        const signatureBinary = hmac.digest();
-        const signatureBase64 = Buffer.from(signatureBinary).toString('base64');
-        return signatureBase64;
-    }
-
-    const httpMethod = 'POST'; // HTTP method (e.g., POST)
-    const baseURL = 'https://api.twitter.com/2/tweets'; // Base URL for the request
-    const queryParams = 'include_entities=true'; // Query parameters (if any)
-    const oauthParams = `oauth_consumer_key=${process.env.TWITTER__CONSUMER_KEY}&oauth_nonce=${randomBase64Data}&oauth_signature_method=HMAC-SHA1&oauth_timestamp=${oauthTimestamp}&oauth_version=1.0&oauth_token=${req.body.accessToken}`; // OAuth parameters (excluding the oauth_signature)
-
-    const encodedHTTPMethod = percentEncode(httpMethod);
-    // console.log(encodedHTTPMethod)
-    const encodedBaseURL = percentEncode(baseURL);
-    // console.log(encodedBaseURL)
-    const encodedQueryParams = percentEncode(queryParams);
-    // console.log(encodedQueryParams)
-    const encodedOAuthParams = percentEncode(oauthParams);
-    // console.log(encodedOAuthParams)
-
-    const baseString = `${encodedHTTPMethod}&${encodedBaseURL}&${encodedQueryParams}&${encodedOAuthParams}`;
-
-    // console.log(baseString)
-    const signingKey = process.env.TWITTER_CONSUMER_SECRET + '&' + accessTokenSecret;
-
-    const signature = generateOAuthSignature(baseString, signingKey);
-    // console.log('OAuth Signature:', signature);
-    // END
-
-    const tweetData = {
-        text: req.body.text,
+            // Use tweet() method and pass object with text 
+            // in text feild and media items in media feild
+            await rwClient.v2.tweet({
+                text: text,
+                // media: { media_ids: [mediaId] },
+            });
+            res.status(200).json({ message: 'Tweet posted successfully.' });
+        } catch (error) {
+            console.log(error);
+        }
     };
 
-    axios.post(apiUrl, tweetData, {
-        headers: {
-
-            'Content-Type': 'application/json',
-            'Authorization': `OAuth oauth_consumer_key="EegqszBrWDI9dRY8gJ0FMYMIt",oauth_token="${req.body.accessToken}",oauth_signature_method="HMAC-SHA1",oauth_timestamp="1691155260",oauth_nonce="1zN3LoHXnhJ",oauth_version="1.0",oauth_signature="yiF85yWbO4qUdhigwLUnx9zG7cE%3D"`,
-            'Cookie': 'guest_id=v1%3A169097582497377431'
-        }
-    })
-        .then(response => {
-            console.log('Tweet posted successfully:', response.data);
-        })
-        .catch(error => {
-            console.error('Error posting tweet:', error);
-        });
+    // Call any of methods and you are done 
+    mediaTweet();
 }
 
+method.twitterPostData = async (req, res) => {
+    // console.log(req.body,"twitter data ")
+}
 
 module.exports = method

@@ -38,6 +38,14 @@ class UserService {
             data
         )
     }
+
+    // async checkId (id) {
+    //     return SocialMediaToken.findOne({
+    //         where: {
+    //             id: id
+    //         }
+    //     })
+    // }
 }
 
 module.exports = UserService;
