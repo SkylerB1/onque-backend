@@ -1,18 +1,14 @@
 const { DataTypes } = require("sequelize");
 const db = require("../config/db.config");
 
-const TwitterPost = db.define("twitterData", {
+const MediaFile = db.define("mediaFile", {
     id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         primaryKey: true,
         autoIncrement: true
-    },
+    }, 
     userId: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    text: {
         type: DataTypes.STRING,
         allowNull: true,
     },
@@ -30,4 +26,4 @@ const TwitterPost = db.define("twitterData", {
     }
 });
 
-module.exports = TwitterPost;
+module.exports = MediaFile

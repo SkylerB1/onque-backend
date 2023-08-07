@@ -1,6 +1,6 @@
 const { SuccessResponse, ErrorResponse } = require("../utils/apiResponse");
 const UserService = require("../services/userServices")
-const loginInterface = new UserService();
+const userInterface = new UserService();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Users = require("../models/Users");
@@ -25,10 +25,10 @@ const method = {}
 
 method.register = async (req, res) => {
     try {
-        const verifiedEmail = await loginInterface.checkEmail(req.body.email);
+        const verifiedEmail = await userInterface.checkEmail(req.body.email);
         if (!verifiedEmail) {
             const hashedPassword = await bcrypt.hash(req.body.password, 10)
-            const data = await loginInterface.createUser({
+            const data = await userInterface.createUser({
                 email: req.body.email,
                 password: hashedPassword,
             });
@@ -58,8 +58,8 @@ method.register = async (req, res) => {
    */
 
 method.logInUser = async (req, res) => {
-    // const result = loginInterface.logInUser();
-    const verifiedEmail = await loginInterface.checkEmail(req.body.email)
+    // const result = userInterface.logInUser();
+    const verifiedEmail = await userInterface.checkEmail(req.body.email)
     if (verifiedEmail) {
         const verifiedPassword = await bcrypt.compare(req.body.password, verifiedEmail.password)
         if (verifiedPassword) {
@@ -82,9 +82,9 @@ method.facebooklogin = async (req, res) => {
     try {
         const { accessToken, userId, platform } = req.body;
 
-        const id = await loginInterface.checkId(userId)
+        const id = await userInterface.checkId(userId)
         if (!id) {
-            const data = await loginInterface.setMediaToken({
+            const data = await userInterface.setMediaToken({
                 id: userId,
                 platform: platform,
                 oauth_token: accessToken,
@@ -110,8 +110,8 @@ method.twitterLogin = (req, res) => {
             url: "https://api.twitter.com/oauth/request_token",
             oauth: {
                 oauth_callback: process.env.OAUTH_CALLBACKURL,
-                consumer_key: process.env.OTHER_TWITTER__CONSUMER_KEY,
-                consumer_secret: process.env.OTHER_TWITTER_CONSUMER_SECRET,
+                consumer_key: process.env.TWITTER__CONSUMER_KEY,
+                consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
             },
         },
         function (err, r, body) {
@@ -150,9 +150,9 @@ method.setUserToken = async (req, res) => {
     try {
         const { accessToken, userId, platform } = req.body;
 
-        const id = await loginInterface.checkId(userId)
+        const id = await userInterface.checkId(userId)
         if (!id) {
-            const data = await loginInterface.setMediaToken({
+            const data = await userInterface.setMediaToken({
                 id: userId,
                 platform: platform,
                 oauth_token: accessToken,
@@ -180,7 +180,7 @@ method.twitterPost = async (req, res) => {
         appSecret: "IJYArxAxOs5p0oaBNrcyYIqROZ8ZWEAuT2GYcNJifGAuP3xQag",
         accessToken: req.body.accessToken,
         accessSecret: req.body.accessTokenSecret,
-        bearerToken: "AAAAAAAAAAAAAAAAAAAAAIBJpAEAAAAAbH3c2R%2FhK7y9J%2FeAR4raGZAtYiU%3D1RyNDwnJS7QraHViRkhRf3Lg3DoSIxJCv1bshti4u7o0axuHdQ",
+        bearerToken: "AAAAAAAAAAAAAAAAAAAAAGwEpAEAAAAAvv29%2Bqg59ZhC9j9YsmfVXtR9SHk%3Do5mgkyL3JVcveruJ5fPgGMEwZDoAquiZV6QeTCAVmb37qHWsdj",
     });
 
     const rwClient = client.readWrite;
@@ -212,6 +212,23 @@ method.twitterPost = async (req, res) => {
 
 method.twitterPostData = async (req, res) => {
     // console.log(req.body,"twitter data ")
+    const data = await userInterface.storePostData({
+        userId: req.body.userId,
+        text: req.body.text,
+        files: req.body.file,
+        platform: req.body.platform,
+        status: 1,
+    });
+    const files = await userInterface.uploadMediaFile({
+        userId: req.body.userId,
+        files: req.body.files,
+    });
+    res.status(200).json({
+        data: data,
+        files: files,
+        message: "user data stored successfully",
+    })
+
 }
 
 module.exports = method
