@@ -6,7 +6,7 @@ const upload = async (req, res) => {
         if (req.file !== undefined) {
             res.status(200).send({
                 file: req.file.originalname,
-                message: "Uploaded the file successfully: " + req.file.originalname,
+                message: "Uploaded the file successfully: " + req.files.originalname,
             });
         }
 
@@ -22,6 +22,28 @@ const upload = async (req, res) => {
         });
     }
 };
+
+// const uploadMultipleFile = async (req, res) => {
+//     try {
+//         if (req.file !== undefined) {
+//             res.status(200).send({
+//                 file: req.file.originalname,
+//                 message: "Uploaded the file successfully: " + req.file.originalname,
+//             });
+//         }
+
+//     } catch (err) {
+//         if (err.code == "LIMIT_FILE_SIZE") {
+//             return res.status(500).send({
+//                 message: "File size cannot be larger than 2MB!",
+//             });
+//         }
+
+//         res.status(500).send({
+//             message: `Could not upload the file: ${req.file.originalname}. ${err}`,
+//         });
+//     }
+// };
 
 const getListFiles = (req, res) => {
     const directoryPath = _basedir + "/resources/static/assets/uploads/";

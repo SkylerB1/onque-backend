@@ -7,6 +7,10 @@ const SocialMediaToken = db.define("socialmediatocken", {
         allowNull: true,
         primaryKey: true,
     },
+    // username: {
+    //   type: DataTypes.STRING,
+    //     allowNull: false
+    // },
     platform: {
         type: DataTypes.STRING,
         allowNull: false,

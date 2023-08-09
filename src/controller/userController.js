@@ -1,10 +1,14 @@
 const { SuccessResponse, ErrorResponse } = require("../utils/apiResponse");
 const UserService = require("../services/userServices")
-const loginInterface = new UserService();
+const userInterface = new UserService();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Users = require("../models/Users");
 var request = require("request");
+const { default: axios } = require("axios");
+const crypto = require('crypto');
+const _ = require('lodash');
+const { TwitterApi } = require("twitter-api-v2");
 
 const method = {}
 
@@ -21,10 +25,10 @@ const method = {}
 
 method.register = async (req, res) => {
     try {
-        const verifiedEmail = await loginInterface.checkEmail(req.body.email);
+        const verifiedEmail = await userInterface.checkEmail(req.body.email);
         if (!verifiedEmail) {
             const hashedPassword = await bcrypt.hash(req.body.password, 10)
-            const data = await loginInterface.createUser({
+            const data = await userInterface.createUser({
                 email: req.body.email,
                 password: hashedPassword,
             });
@@ -54,8 +58,8 @@ method.register = async (req, res) => {
    */
 
 method.logInUser = async (req, res) => {
-    // const result = loginInterface.logInUser();
-    const verifiedEmail = await loginInterface.checkEmail(req.body.email)
+    // const result = userInterface.logInUser();
+    const verifiedEmail = await userInterface.checkEmail(req.body.email)
     if (verifiedEmail) {
         const verifiedPassword = await bcrypt.compare(req.body.password, verifiedEmail.password)
         if (verifiedPassword) {
@@ -74,13 +78,13 @@ method.logInUser = async (req, res) => {
     }
 }
 
-method.facebooklogin = async (req, res) => {   
+method.facebooklogin = async (req, res) => {
     try {
         const { accessToken, userId, platform } = req.body;
 
-        const id = await loginInterface.checkId(userId)
+        const id = await userInterface.checkId(userId)
         if (!id) {
-            const data = await loginInterface.setMediaToken({
+            const data = await userInterface.setMediaToken({
                 id: userId,
                 platform: platform,
                 oauth_token: accessToken,
@@ -89,7 +93,7 @@ method.facebooklogin = async (req, res) => {
                 data: data,
                 message: "user created successfully",
             })
-        }else {
+        } else {
             res.status(400).json({ message: "user already exist" })
         }
     } catch (err) {
@@ -105,7 +109,7 @@ method.twitterLogin = (req, res) => {
         {
             url: "https://api.twitter.com/oauth/request_token",
             oauth: {
-                oauth_callback: process.env.LOCAL_OAUTH_CALLBACKURL,
+                oauth_callback: process.env.OAUTH_CALLBACKURL,
                 consumer_key: process.env.OTHER_TWITTER__CONSUMER_KEY,
                 consumer_secret: process.env.OTHER_TWITTER_CONSUMER_SECRET,
             },
@@ -121,13 +125,34 @@ method.twitterLogin = (req, res) => {
     );
 }
 
+method.twitterAccessToken = async (req, res) => {
+    const oauth_token = req.body.oauth_token;
+    const oauth_verifier = req.body.oauth_verifier;
+
+    const response = await axios.post(`https://api.twitter.com/oauth/access_token?oauth_verifier=${oauth_verifier}&oauth_token=${oauth_token}`);
+    const data = response.data.split("&");
+    const accessToken = data[0].split("=")[1];
+    const accessSecret = data[1].split("=")[1];
+    const user_id = data[2].split("=")[1];
+    const screen_name = data[3].split("=")[1];
+    const userData = {
+        accessToken: accessToken,
+        accessSecret: accessSecret,
+        user_id: user_id,
+        screen_name: screen_name,
+    }
+    res.status(200).json({
+        data: userData,
+    })
+}
+
 method.setUserToken = async (req, res) => {
     try {
         const { accessToken, userId, platform } = req.body;
 
-        const id = await loginInterface.checkId(userId)
+        const id = await userInterface.checkId(userId)
         if (!id) {
-            const data = await loginInterface.setMediaToken({
+            const data = await userInterface.setMediaToken({
                 id: userId,
                 platform: platform,
                 oauth_token: accessToken,
@@ -136,7 +161,7 @@ method.setUserToken = async (req, res) => {
                 data: data,
                 message: "user created successfully",
             })
-        }else {
+        } else {
             res.status(400).json({ message: "user already exist" })
         }
     } catch (err) {
@@ -147,5 +172,63 @@ method.setUserToken = async (req, res) => {
     }
 }
 
+method.twitterPost = async (req, res) => {
+    const text = req.body.text;
+
+    const client = new TwitterApi({
+        appKey: "EsjCJaczKFyzdaBLfSoe36YMh",
+        appSecret: "IJYArxAxOs5p0oaBNrcyYIqROZ8ZWEAuT2GYcNJifGAuP3xQag",
+        accessToken: req.body.accessToken,
+        accessSecret: req.body.accessTokenSecret,
+        bearerToken: "AAAAAAAAAAAAAAAAAAAAAIBJpAEAAAAAbH3c2R%2FhK7y9J%2FeAR4raGZAtYiU%3D1RyNDwnJS7QraHViRkhRf3Lg3DoSIxJCv1bshti4u7o0axuHdQ",
+    });
+
+    const rwClient = client.readWrite;
+    const mediaTweet = async () => {
+        try {
+
+            // Create mediaID 
+            // const mediaId = await client.v1.uploadMedia(
+
+            //     // Put path of image you wish to post
+            //     "./1605232393098780672example.png"
+            // );
+
+            // Use tweet() method and pass object with text 
+            // in text feild and media items in media feild
+            await rwClient.v2.tweet({
+                text: text,
+                // media: { media_ids: [mediaId] },
+            });
+            res.status(200).json({ message: 'Tweet posted successfully.' });
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    // Call any of methods and you are done 
+    mediaTweet();
+}
+
+method.twitterPostData = async (req, res) => {
+    // console.log(req.body,"twitter data ")
+    const data = await userInterface.storePostData({
+        userId: req.body.userId,
+        text: req.body.text,
+        files: req.body.file,
+        platform: req.body.platform,
+        status: 1,
+    });
+    const files = await userInterface.uploadMediaFile({
+        userId: req.body.userId,
+        files: req.body.files,
+    });
+    res.status(200).json({
+        data: data,
+        files: files,
+        message: "user data stored successfully",
+    })
+
+}
 
 module.exports = method
