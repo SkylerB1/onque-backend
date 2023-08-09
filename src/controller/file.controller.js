@@ -1,5 +1,5 @@
 const fs = require("fs");
-const baseUrl = "http://localhost:8080/files/";
+const baseUrl = "https://api.jjmedia.appwrk.com:8080/files/";
 
 const upload = async (req, res) => {
     try {
