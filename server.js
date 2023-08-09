@@ -21,15 +21,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // global-route
 app.use("/api", router);
 
-// app.use((req, res, next) => {
-//     if (req.protocol === 'http') {
-//         console.log(`https://${req.headers.host}${req.url}`)
-//         return res.redirect(302, `https://${req.headers.host}${req.url}`);
-//     }
-//     next();
-// });
-
-
 app.listen(process.env.PORT, () => {
     console.log(`Server is running on port: ${process.env.PORT}`);
   });
