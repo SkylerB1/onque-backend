@@ -12,7 +12,6 @@ LOGGING = environment.development.logging;
 const db = new Sequelize(DB_NAME, USER_NAME, PASSWORD, {
   host: HOST,
   dialect: DIALECT,
-  logging: LOGGING
 });
 
 module.exports = db;

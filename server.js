@@ -2,7 +2,19 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
-const router =  require("./src/routes/index");
+const router = require("./src/routes/index");
+
+const https = require("https");
+const fs = require("fs");
+
+const https_options = {
+  key: fs.readFileSync(
+    "/etc/letsencrypt/live/api.jjmedia.appwrk.com/privkey.pem"
+  ),
+  cert: fs.readFileSync(
+    "/etc/letsencrypt/live/api.jjmedia.appwrk.com/fullchain.pem"
+  ),
+};
 
 require("dotenv").config();
 require("./src/config/db.config");
@@ -10,8 +22,8 @@ require("./src/models/index");
 
 global._basedir = __dirname;
 
-var corsOptions = {
-  origin: "*"
+const corsOptions = {
+  origin: "*",
 };
 
 app.use(cors(corsOptions));
@@ -21,15 +33,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // global-route
 app.use("/api", router);
 
-// app.use((req, res, next) => {
-//     if (req.protocol === 'http') {
-//         console.log(`https://${req.headers.host}${req.url}`)
-//         return res.redirect(302, `https://${req.headers.host}${req.url}`);
-//     }
-//     next();
-// });
+const httpsServer = https.createServer(https_options, app);
 
-
-app.listen(process.env.PORT, () => {
-    console.log(`Server is running on port: ${process.env.PORT}`);
-  });
+httpsServer.listen(process.env.PORT);

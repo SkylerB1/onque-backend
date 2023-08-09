@@ -1,10 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const UserController = require("../controller/userController");
-const authorization = require("../middleware/auth.middleware");
-const { userSchema } = require("../utils/schema/schema");
-const { ValidationSource, validator } = require("../utils/validator");
-const uploadFileMiddleware = require('../middleware/upload');
+const uploadSingleFileMiddleware = require('../middleware/upload');
 
 router.get('/twitter/reverse',UserController.twitterLogin)
 router.post('/twitter/accessToken',UserController.twitterAccessToken)
