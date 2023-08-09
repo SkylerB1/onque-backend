@@ -116,12 +116,9 @@ method.register = async (req, res) => {
 
 
 method.logInUser = async (req, res) => {
-<<<<<<< HEAD
-=======
 
     // const result = userInterface.logInUser();
 
->>>>>>> 132aa4745786c9d17427821bbe12a7112818f356
     const verifiedEmail = await userInterface.checkEmail(req.body.email)
 
     if (verifiedEmail) {
