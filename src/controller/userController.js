@@ -110,8 +110,8 @@ method.twitterLogin = (req, res) => {
             url: "https://api.twitter.com/oauth/request_token",
             oauth: {
                 oauth_callback: process.env.OAUTH_CALLBACKURL,
-                consumer_key: process.env.OTHER_TWITTER__CONSUMER_KEY,
-                consumer_secret: process.env.OTHER_TWITTER_CONSUMER_SECRET,
+                consumer_key: process.env.LIVE_TWITTER__CONSUMER_KEY,
+                consumer_secret: process.env.LIVE_TWITTER_CONSUMER_SECRET,
             },
         },
         function (err, r, body) {
@@ -126,24 +126,38 @@ method.twitterLogin = (req, res) => {
 }
 
 method.twitterAccessToken = async (req, res) => {
-    const oauth_token = req.body.oauth_token;
-    const oauth_verifier = req.body.oauth_verifier;
+    try {
+        const oauth_token = req.body.oauth_token;
+        const oauth_verifier = req.body.oauth_verifier;
 
-    const response = await axios.post(`https://api.twitter.com/oauth/access_token?oauth_verifier=${oauth_verifier}&oauth_token=${oauth_token}`);
-    const data = response.data.split("&");
-    const accessToken = data[0].split("=")[1];
-    const accessSecret = data[1].split("=")[1];
-    const user_id = data[2].split("=")[1];
-    const screen_name = data[3].split("=")[1];
-    const userData = {
-        accessToken: accessToken,
-        accessSecret: accessSecret,
-        user_id: user_id,
-        screen_name: screen_name,
+        const response = await axios.post(`https://api.twitter.com/oauth/access_token?oauth_verifier=${oauth_verifier}&oauth_token=${oauth_token}`);
+
+        const data = response.data.split("&");
+        const accessToken = data[0].split("=")[1];
+        const accessSecret = data[1].split("=")[1];
+        const user_id = data[2].split("=")[1];
+        const screen_name = data[3].split("=")[1];
+        const userData = {
+            accessToken: accessToken,
+            accessSecret: accessSecret,
+            user_id: user_id,
+            screen_name: screen_name,
+        }
+        res.status(200).json({
+            data: userData,
+        })
+    } catch (err) {
+        console.log(err)
+        if (err.response.status === 401) {
+            res.status(401).json({
+                message: 'Unauthorized'
+            })
+        } else {
+            res.status(500).json({
+                message: err.message
+            })
+        }
     }
-    res.status(200).json({
-        data: userData,
-    })
 }
 
 method.setUserToken = async (req, res) => {
@@ -174,6 +188,12 @@ method.setUserToken = async (req, res) => {
 
 method.twitterPost = async (req, res) => {
     const text = req.body.text;
+    const imagePath = req.files.map((item) => {
+        return item.path;
+    })
+    const imageData = req.files.map((item) => {
+        return item.filename;
+    })
 
     const client = new TwitterApi({
         appKey: "EsjCJaczKFyzdaBLfSoe36YMh",
@@ -184,51 +204,53 @@ method.twitterPost = async (req, res) => {
     });
 
     const rwClient = client.readWrite;
-    const mediaTweet = async () => {
-        try {
-
-            // Create mediaID 
-            // const mediaId = await client.v1.uploadMedia(
-
-            //     // Put path of image you wish to post
-            //     "./1605232393098780672example.png"
-            // );
-
-            // Use tweet() method and pass object with text 
-            // in text feild and media items in media feild
+    try {
+        let mediaIds = []
+        for(let i=0; i < imagePath.length; i++) {
+            const mediaId = await client.v1.uploadMedia(
+                imagePath[i]
+            );
+            mediaIds.push(mediaId);
+        }
+        const data = await userInterface.storePostData({
+            userId: req.body.userId,
+            text: req.body.text,
+            files: imageData,
+            platform: req.body.platform,
+            status: 1,
+        });
+        if (mediaIds.length > 0) {
             await rwClient.v2.tweet({
                 text: text,
-                // media: { media_ids: [mediaId] },
+                media: { media_ids: mediaIds},
             });
-            res.status(200).json({ message: 'Tweet posted successfully.' });
-        } catch (error) {
-            console.log(error);
+        } else {
+            await rwClient.v2.tweet({
+                text: text,
+            });
         }
-    };
-
-    // Call any of methods and you are done 
-    mediaTweet();
+        res.status(200).json({
+            data: data,
+            message: 'Tweet posted successfully.'
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: 'Something went wrong',
+            error: error.message,
+        });
+    }
 }
 
-method.twitterPostData = async (req, res) => {
-    // console.log(req.body,"twitter data ")
-    const data = await userInterface.storePostData({
-        userId: req.body.userId,
-        text: req.body.text,
-        files: req.body.file,
-        platform: req.body.platform,
-        status: 1,
-    });
-    const files = await userInterface.uploadMediaFile({
-        userId: req.body.userId,
-        files: req.body.files,
-    });
+method.getTwitterData = async (req, res) => {
+   let data = await userInterface.getPostData();
+   if(data) {
     res.status(200).json({
-        data: data,
-        files: files,
-        message: "user data stored successfully",
+        data: data
     })
-
+   } else {
+    res.status(400).json({ message: "No data found" })
+   }
+//    console.log(data,'in 246');  
 }
 
 module.exports = method

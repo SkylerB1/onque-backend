@@ -47,6 +47,10 @@ class UserService {
         )
     }
 
+    async getPostData() {
+        return PostData.findAll();
+    }
+    
     async uploadMediaFile(data) {
         return MediaFile.create(
             data
