@@ -7,6 +7,7 @@ const { ValidationSource, validator } = require("../utils/validator")
 
 router.post('/register', validator(userSchema.login, ValidationSource.BODY) ,UserController.register)
 router.post('/login', validator(userSchema.login, ValidationSource.BODY), UserController.logInUser)
+router.get('/getPostData', UserController.getPostData)
 router.post('/facebooklogin', UserController.facebooklogin)
 
 module.exports = router;

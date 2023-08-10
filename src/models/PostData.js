@@ -17,7 +17,7 @@ const PostData = db.define("postData", {
         allowNull: true,
     },
     files: {
-        type: DataTypes.JSON,
+        type: DataTypes.TEXT,
         allowNull: true,
     },
     platform: {
