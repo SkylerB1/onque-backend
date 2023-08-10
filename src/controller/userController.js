@@ -374,132 +374,77 @@ method.setUserToken = async (req, res) => {
 
 
 method.twitterPost = async (req, res) => {
-
     const text = req.body.text;
     let token_secret = req.headers.accesstokensecret;
     let access_token = req.headers.accesstoken;
     let user_id = req.headers.userid;
+
     const imagePath = req.files.map((item) => {
-
         return item.path;
-
     })
-
-    const imageData = req.files.map((item) => {
-
-        return item.filename;
-
+    
+    let imageData = req.files.map((item) => {        
+        return item.filename;        
     })
-
-
+    imageData = imageData.join(',');
+    // console.log(''imageData)
 
     const client = new TwitterApi({
-
         appKey: "EsjCJaczKFyzdaBLfSoe36YMh",
-
         appSecret: "IJYArxAxOs5p0oaBNrcyYIqROZ8ZWEAuT2GYcNJifGAuP3xQag",
-
         accessToken: access_token,
         accessSecret: token_secret,
-
         bearerToken: "AAAAAAAAAAAAAAAAAAAAAIBJpAEAAAAAbH3c2R%2FhK7y9J%2FeAR4raGZAtYiU%3D1RyNDwnJS7QraHViRkhRf3Lg3DoSIxJCv1bshti4u7o0axuHdQ",
-
     });
 
-
-
     const rwClient = client.readWrite;
-
     try {
-
         let mediaIds = []
-
         for (let i = 0; i < imagePath.length; i++) {
-
             const mediaId = await client.v1.uploadMedia(
-
                 imagePath[i]
-
             );
-
             mediaIds.push(mediaId);
-
         }
-
         const data = await userInterface.storePostData({
             userId: user_id,
             text: req.body.text,
-
             files: imageData,
-
             platform: req.body.platform,
-
             status: 1,
-
         });
-
         if (mediaIds.length > 0) {
-
             await rwClient.v2.tweet({
-
                 text: text,
-
                 media: { media_ids: mediaIds },
-
             });
-
         } else {
-
             await rwClient.v2.tweet({
-
                 text: text,
-
             });
-
         }
-
         res.status(200).json({
-
             data: data,
-
             message: 'Tweet posted successfully.'
-
         });
-
     } catch (error) {
-
         res.status(500).json({
-
             message: 'Something went wrong',
-
             error: error.message,
-
         });
-
     }
-
 }
 
-
-
-method.getTwitterData = async (req, res) => {
-
+method.getPostData = async (req, res) => {
     let data = await userInterface.getPostData();
-
     if (data) {
-
         res.status(200).json({
-
             data: data
-
         })
-
     } else {
-
         res.status(400).json({ message: "No data found" })
     }
 }
-
 
 
 module.exports = method
