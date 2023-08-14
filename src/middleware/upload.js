@@ -4,7 +4,7 @@ const maxSize = 50 * 1024 * 1024;
 
 let storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, _basedir + "/resources/static/assets/uploads/");
+        cb(null, _basedir + "/assets/");
     },
     filename: function (req, file, cb) {
         let ext = file.originalname.substring(
