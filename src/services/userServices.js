@@ -40,11 +40,42 @@ class UserService {
         )
     }
 
-    async storePostData(data) {
+    async storePostData(data,post_id) {
+
         // backend query
-        return PostData.create(
-            data
-        )
+        /****  if post id exist then update or create */
+        let createRequired = 1;
+
+        if(post_id != '') {
+
+            let where = { id:post_id};
+
+             let getPostData = await PostData.findOne({where : where});
+
+             if(getPostData) {
+
+                createRequired = 0;
+
+                return PostData.update(
+
+                    data,{where: where}
+
+                )
+
+             }
+
+        } else{}
+
+        if(createRequired) {
+
+            return PostData.create(
+
+                data
+
+            )
+
+        }
+
     }
 
     async getPostData() {
@@ -55,6 +86,17 @@ class UserService {
         return MediaFile.create(
             data
         )
+    }
+    async getSpecificPostData(id,userId){
+
+        let where = { id,userId};
+
+       return await PostData.findOne({where : where});
+
+ 
+
+ 
+
     }
 }
 
