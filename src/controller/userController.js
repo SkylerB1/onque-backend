@@ -107,8 +107,8 @@ method.twitterLogin = (req, res) => {
             url: "https://api.twitter.com/oauth/request_token",
             oauth: {
                 oauth_callback: process.env.OAUTH_CALLBACKURL,
-                consumer_key: process.env.TWITTER__CONSUMER_KEY,
-                consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+                consumer_key: process.env.LIVE_TWITTER__CONSUMER_KEY,
+                consumer_secret: process.env.LIVE_TWITTER_CONSUMER_SECRET,
             },
         },
         function (err, r, body) {
@@ -153,11 +153,11 @@ method.twitterAccessToken = async (req, res) => {
 let postOnTwitter = async (access_token, token_secret, text = '', imagePath = []) => {
 
     const client = new TwitterApi({
-        appKey: "weNnuWHuaoOLpFbsOY4sivVL1",
-        appSecret: "9xYuCgH3nBQJHvdVRi0fMLsKVhbwsVqYldO1sym1m0Di2WAkOj",
+        appKey: "EsjCJaczKFyzdaBLfSoe36YMh",
+        appSecret: "IJYArxAxOs5p0oaBNrcyYIqROZ8ZWEAuT2GYcNJifGAuP3xQag",
         accessToken: access_token,
         accessSecret: token_secret,
-        bearerToken: "AAAAAAAAAAAAAAAAAAAAAGwEpAEAAAAAvv29%2Bqg59ZhC9j9YsmfVXtR9SHk%3Do5mgkyL3JVcveruJ5fPgGMEwZDoAquiZV6QeTCAVmb37qHWsdj",
+        bearerToken: "AAAAAAAAAAAAAAAAAAAAAIBJpAEAAAAAbH3c2R%2FhK7y9J%2FeAR4raGZAtYiU%3D1RyNDwnJS7QraHViRkhRf3Lg3DoSIxJCv1bshti4u7o0axuHdQ",
     });
     const rwClient = client.readWrite;
     let mediaIds = [];
