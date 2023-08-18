@@ -138,8 +138,9 @@ class UserService {
     }
 
     async getAccessToken(userId) {
-        let where = { userId };
+        let where = { userId: userId };
         return await SocialMediaToken.findOne({ where: where });
+        
     }
 }
 
