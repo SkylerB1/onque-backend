@@ -8,6 +8,7 @@ const { default: axios } = require("axios");
 const _ = require('lodash');
 const { TwitterApi } = require("twitter-api-v2");
 const fs = require("fs");
+const moment = require('moment');
 
 const method = {}
 
@@ -133,59 +134,18 @@ method.twitterAccessToken = async (req, res) => {
         const userData = {
             accessToken: accessToken,
             accessSecret: accessSecret,
-            user_id: user_id,
-            screen_name: screen_name,
+            userId: user_id,
+            platform: "twitter",
+            screenName: screen_name,
         }
+
+        await userInterface.setMediaToken(userData);
+
         res.status(200).json({
             data: userData,
         })
     } catch (err) {
-        if (err.response.status === 401) {
-            res.status(401).json({
-                message: 'Unauthorized'
-            })
-        } else {
-            res.status(500).json({
-                message: err.message
-            })
-        }
-    }
-}
-
-
-method.setUserToken = async (req, res) => {
-    try {
-        const { accessToken, user_id, platform, accessSecret } = req.body;
-        const userId = await userInterface.checkId(user_id)
-        if (!userId) {
-            const objData = {
-                userId: user_id,
-                platform: platform,
-                access_token: accessToken,
-                access_secret: accessSecret,
-            }
-            const data = await userInterface.setMediaToken(objData, user_id);
-            res.status(200).json({
-                data: data,
-                message: "user token store successfully",
-            })
-        } else if (userId) {
-            const objData = {
-                access_token: accessToken,
-                access_secret: accessSecret,
-            }
-            const data = await userInterface.setMediaToken(objData, user_id);
-            res.status(200).json({
-                data: data,
-                message: "user token update successfully",
-            })
-        } else {
-            res.status(400).json({ message: "user already exist" })
-        }
-    } catch (err) {
-        res.status(500).json({
-            message: err.message
-        })
+        console.log(err)
     }
 }
 
@@ -230,20 +190,9 @@ method.twitterPost = async (req, res) => {
 
     //for post_send_type 
     const receivedDateString = req.body.post_send_date;
-    const receivedDate = new Date(receivedDateString);
-    const currentDate = new Date();
-    let post_send_type;
-    if (
-        receivedDate.getFullYear() === currentDate.getFullYear() &&
-        receivedDate.getMonth() === currentDate.getMonth() &&
-        receivedDate.getDate() === currentDate.getDate() &&
-        receivedDate.getHours() === currentDate.getHours() &&
-        receivedDate.getMinutes() === currentDate.getMinutes()
-    ) {
-        post_send_type = 'now';
-    } else {
-        post_send_type = 'scheduled';
-    }
+    const receivedDate = moment(receivedDateString, "ddd MMM DD YYYY HH:mm:ss ZZ");
+    const currentDate = moment();
+    const post_send_type = receivedDate.isSame(currentDate, 'minute') ? 'now' : 'scheduled';
     //end
 
     if (prev_files.length > 0) {

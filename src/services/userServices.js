@@ -35,30 +35,27 @@ class UserService {
         })
     }
 
-    async setMediaToken(data, userId) {
-        let createRequired = 1;
+    async setMediaToken(data) {
 
-        if (userId != '') {
-            let where = { userId: userId };
-            let objData = {
-                access_token: data.access_token,
-                access_secret: data.access_secret,
+        if (data.userId != '') {
+            const where = { userId: data.userId };
+            const objData = {
+                accessToken: data.accessToken,
+                accessSecret: data.accessSecret,
             }
-            let updateSocialToke = await SocialMediaToken.findOne({ where: where });
+            const updateSocialToke = await SocialMediaToken.findOne({ where: where });
+            console.log(updateSocialToke)
             if (updateSocialToke) {
-                createRequired = 0;
                 return SocialMediaToken.update(
                     objData, { where: where }
+                )
+            } else {
+                return SocialMediaToken.create(
+                    data
                 )
             }
         } else {
             // post_id = data.id;
-        }
-
-        if (createRequired) {
-            return SocialMediaToken.create(
-                data
-            )
         }
     }
 
@@ -140,7 +137,7 @@ class UserService {
         return result;
     }
 
-    async getAccessToken (userId) {
+    async getAccessToken(userId) {
         let where = { userId };
         return await SocialMediaToken.findOne({ where: where });
     }

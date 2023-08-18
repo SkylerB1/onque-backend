@@ -17,11 +17,11 @@ const SocialMediaToken = db.define("socialmediatocken", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  access_token: {
+  accessToken: {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  access_secret: {
+  accessSecret: {
     type: DataTypes.STRING,
     allowNull: true,
   },
