@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const db = require("../config/db.config");
+const SocialMediaToken = require("./SocialMediaToken");
 
 const PostData = db.define("postData", {
     id: {
@@ -32,6 +33,15 @@ const PostData = db.define("postData", {
         type: DataTypes.DATE,
         allowNull: true
     },
+    deleted: {
+        type: DataTypes.ENUM,
+        values: ['0', '1'],
+        defaultValue: '0',
+    },
+    deletedOn: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
     createdAt: {
         type: DataTypes.DATE,
         allowNull: true
@@ -41,5 +51,8 @@ const PostData = db.define("postData", {
         allowNull: true
     }
 });
+
+// PostData.hasMany(SocialMediaToken, { as: "socialmediatocken" });
+
 
 module.exports = PostData;
