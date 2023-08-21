@@ -107,8 +107,8 @@ method.twitterLogin = (req, res) => {
             url: "https://api.twitter.com/oauth/request_token",
             oauth: {
                 oauth_callback: process.env.OAUTH_CALLBACKURL,
-                consumer_key: process.env.LIVE_TWITTER__CONSUMER_KEY,
-                consumer_secret: process.env.LIVE_TWITTER_CONSUMER_SECRET,
+                consumer_key: process.env.TWITTER__CONSUMER_KEY,
+                consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
             },
         },
         function (err, r, body) {
@@ -153,11 +153,11 @@ method.twitterAccessToken = async (req, res) => {
 let postOnTwitter = async (access_token, token_secret, text = '', imagePath = []) => {
 
     const client = new TwitterApi({
-        appKey: "EsjCJaczKFyzdaBLfSoe36YMh",
-        appSecret: "IJYArxAxOs5p0oaBNrcyYIqROZ8ZWEAuT2GYcNJifGAuP3xQag",
+        appKey: "weNnuWHuaoOLpFbsOY4sivVL1",
+        appSecret: "9xYuCgH3nBQJHvdVRi0fMLsKVhbwsVqYldO1sym1m0Di2WAkOj",
         accessToken: access_token,
         accessSecret: token_secret,
-        bearerToken: "AAAAAAAAAAAAAAAAAAAAAIBJpAEAAAAAbH3c2R%2FhK7y9J%2FeAR4raGZAtYiU%3D1RyNDwnJS7QraHViRkhRf3Lg3DoSIxJCv1bshti4u7o0axuHdQ",
+        bearerToken: "AAAAAAAAAAAAAAAAAAAAAGwEpAEAAAAAvv29%2Bqg59ZhC9j9YsmfVXtR9SHk%3Do5mgkyL3JVcveruJ5fPgGMEwZDoAquiZV6QeTCAVmb37qHWsdj",
     });
     const rwClient = client.readWrite;
     let mediaIds = [];
@@ -318,8 +318,8 @@ method.getSpecificPostData = async (req, res) => {
 
 method.deletePostData = async (req, res) => {
     try {
-        let post_id = req?.body?.headers.post_id;
-        let user_id = req?.body?.headers.userId;
+        let post_id = req.headers.post_id;
+        let user_id = req.headers.userid;
         let data = await userInterface.updateSpecificPostData(post_id, user_id);
         if (data.delete == 0) {
             res.status(200).json({
