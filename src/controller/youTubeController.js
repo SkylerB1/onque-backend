@@ -6,14 +6,13 @@ const moment = require("moment");
 const getYouTubeAuthUrl = async (req, res) => {
   try {
     let access_token = req.headers.accesstoken;
-    let user_id = req.headers.userid;
-    let screenName = req.headers.userid;
+    let screenName = req.headers.screenname;
+    let platform = req.headers.platform;
 
     const userData = {
       accessToken: access_token,
       accessSecret: "",
-      userId: user_id,
-      platform: "youtube",
+      platform: platform,
       screenName: screenName,
     };
 
@@ -22,7 +21,7 @@ const getYouTubeAuthUrl = async (req, res) => {
     res.status(200).json({
       data: userData,
     });
-  } catch (error) {
+  } catch (err) {
     console.log(err);
   }
 };
@@ -36,7 +35,6 @@ const uplodYouTubeVideo = async (req, res) => {
 
     const youtubeHeaders = getHeaders("youtube");
     const discription = req.body.text;
-    const user_id = youtubeHeaders.userId;
     const youTubePresets = req.body.youTubePresets;
     const data = JSON.parse(youTubePresets);
 
@@ -78,10 +76,10 @@ const uplodYouTubeVideo = async (req, res) => {
     /***  it is used for update  */
 
     const directoryPath = _basedir + "/assets/";
-    let post_id = req.headers.post_id ? req.headers.post_id : "";
+    let post_id = youtubeHeaders.post_id ? youtubeHeaders.post_id : "";
 
     if (post_id != "") {
-      let data = await userInterface.getSpecificPostData(post_id, user_id);
+      let data = await userInterface.getSpecificPostData(post_id);
       if (data && data.files != "") {
         let posted_file_data = JSON.parse(data.files);
 
@@ -120,7 +118,7 @@ const uplodYouTubeVideo = async (req, res) => {
     imageData = imageData.length > 0 ? JSON.stringify(imageData) : "";
 
     let objData = {
-      userId: user_id,
+      screenName: screen_name,
       text: req.body.text,
       files: imageData,
       platform: req.body.platform,

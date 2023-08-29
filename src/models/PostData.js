@@ -9,7 +9,7 @@ const PostData = db.define("postData", {
         primaryKey: true,
         autoIncrement: true
     },
-    userId: {
+    screenName: {
         type: DataTypes.STRING,
         allowNull: true,
     },

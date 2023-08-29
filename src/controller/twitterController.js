@@ -19,12 +19,12 @@ const postOnTwitter = async (
   imagePath = []
 ) => {
   const client = new TwitterApi({
-    appKey: "weNnuWHuaoOLpFbsOY4sivVL1",
-    appSecret: "9xYuCgH3nBQJHvdVRi0fMLsKVhbwsVqYldO1sym1m0Di2WAkOj",
+    appKey: "EsjCJaczKFyzdaBLfSoe36YMh",
+    appSecret: "IJYArxAxOs5p0oaBNrcyYIqROZ8ZWEAuT2GYcNJifGAuP3xQag",
     accessToken: access_token,
     accessSecret: token_secret,
     bearerToken:
-      "AAAAAAAAAAAAAAAAAAAAAGwEpAEAAAAAvv29%2Bqg59ZhC9j9YsmfVXtR9SHk%3Do5mgkyL3JVcveruJ5fPgGMEwZDoAquiZV6QeTCAVmb37qHWsdj",
+      "AAAAAAAAAAAAAAAAAAAAAIBJpAEAAAAAbH3c2R%2FhK7y9J%2FeAR4raGZAtYiU%3D1RyNDwnJS7QraHViRkhRf3Lg3DoSIxJCv1bshti4u7o0axuHdQ",
   });
   const rwClient = client.readWrite;
   let mediaIds = [];
@@ -56,7 +56,7 @@ const twitterPost = async (req, res) => {
   const text = req.body.text;
   let token_secret = twitterHeaders.accessTokenSecret;
   let access_token = twitterHeaders.accessToken;
-  let user_id = twitterHeaders.userId;
+  let screen_name = twitterHeaders.screenName;
   let scheduledDate = req.body.post_send_date
     ? req.body.post_send_date
     : Date();
@@ -89,10 +89,10 @@ const twitterPost = async (req, res) => {
   /***  it is used for update  */
 
   const directoryPath = _basedir + "/assets/";
-  let post_id = req.headers.post_id ? req.headers.post_id : "";
+  let post_id = twitterHeaders.post_id ? twitterHeaders.post_id : "";
 
   if (post_id != "") {
-    let data = await userInterface.getSpecificPostData(post_id, user_id);
+    let data = await userInterface.getSpecificPostData(post_id);
     if (data && data.files != "") {
       let posted_file_data = JSON.parse(data.files);
 
@@ -135,7 +135,7 @@ const twitterPost = async (req, res) => {
   imageData = imageData.length > 0 ? JSON.stringify(imageData) : "";
   try {
     let objData = {
-      userId: user_id,
+      screenName: screen_name,
       text: req.body.text,
       files: imageData,
       platform: req.body.platform,
@@ -154,7 +154,6 @@ const twitterPost = async (req, res) => {
     }
 
     /** end it is post in twitter */
-
     res.status(200).json({
       message: "Tweet posted successfully.",
     });

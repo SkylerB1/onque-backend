@@ -9,7 +9,7 @@ const SocialMediaToken = db.define("socialmediatocken", {
     primaryKey: true,
     autoIncrement: true
   },
-  userId: {
+  screenName: {
     type: DataTypes.STRING,
     allowNull: true,
   },

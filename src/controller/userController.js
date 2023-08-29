@@ -86,38 +86,14 @@ method.logInUser = async (req, res) => {
   }
 };
 
-method.facebooklogin = async (req, res) => {
-  try {
-    const { accessToken, userId, platform } = req.body;
-    const id = await userInterface.checkId(userId);
-    if (!id) {
-      const data = await userInterface.setMediaToken({
-        id: userId,
-        platform: platform,
-        oauth_token: accessToken,
-      });
-      res.status(200).json({
-        data: data,
-        message: "user created successfully",
-      });
-    } else {
-      res.status(400).json({ message: "user already exist" });
-    }
-  } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
-  }
-};
-
 method.twitterLogin = (req, res) => {
   request.post(
     {
       url: "https://api.twitter.com/oauth/request_token",
       oauth: {
         oauth_callback: process.env.OAUTH_CALLBACKURL,
-        consumer_key: process.env.TWITTER__CONSUMER_KEY,
-        consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+        consumer_key: process.env.LIVE_TWITTER__CONSUMER_KEY,
+        consumer_secret: process.env.LIVE_TWITTER_CONSUMER_SECRET,
       },
     },
     function (err, r, body) {
@@ -139,7 +115,6 @@ method.twitterAccessToken = async (req, res) => {
       `https://api.twitter.com/oauth/access_token?oauth_verifier=${oauth_verifier}&oauth_token=${oauth_token}`
     );
 
-    console.log(response);
     const data = response.data.split("&");
     const accessToken = data[0].split("=")[1];
     const accessSecret = data[1].split("=")[1];
@@ -148,7 +123,6 @@ method.twitterAccessToken = async (req, res) => {
     const userData = {
       accessToken: accessToken,
       accessSecret: accessSecret,
-      userId: user_id,
       platform: "twitter",
       screenName: screen_name,
     };
@@ -191,9 +165,8 @@ method.getPostData = async (req, res) => {
 
 method.getSpecificPostData = async (req, res) => {
   let post_id = req.headers.post_id;
-  let user_id = req.headers.user_id;
   try {
-    let data = await userInterface.getSpecificPostData(post_id, user_id);
+    let data = await userInterface.getSpecificPostData(post_id);
     if (data) {
       res.status(200).json({
         data: data,
@@ -216,8 +189,7 @@ method.getSpecificPostData = async (req, res) => {
 method.deletePostData = async (req, res) => {
   try {
     let post_id = req.headers.post_id;
-    let user_id = req.headers.userid;
-    let data = await userInterface.updateSpecificPostData(post_id, user_id);
+    let data = await userInterface.updateSpecificPostData(post_id);
     if (data.delete == 0) {
       res.status(200).json({
         message: "Post not deleted",
@@ -239,15 +211,13 @@ method.deletePostData = async (req, res) => {
 const crons = async (req, res) => {
   try {
     const getScheduleData = await userInterface.scheduleData();
-    // console.log(getScheduleData)
-    // return
     if (getScheduleData.length > 0) {
       const directoryPath = _basedir + "/assets/";
       getScheduleData.map(async (item) => {
         const post_id = item.id;
-        const userId = item.userId;
+        const screenName = item.screenName;
         const platform = item.platform;
-        const getAccess = await userInterface.getAccessToken(userId);
+        const getAccess = await userInterface.getAccessToken(screenName);
         const text = item.text;
         const imagePathDataArray = item.files ? JSON.parse(item.files) : [];
         const imageNames = imagePathDataArray.map(
