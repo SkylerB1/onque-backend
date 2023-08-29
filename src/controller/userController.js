@@ -3,13 +3,12 @@ const UserService = require("../services/userServices")
 const userInterface = new UserService();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const Users = require("../models/Users");
 var request = require("request");
 const { default: axios } = require("axios");
-const crypto = require('crypto');
 const _ = require('lodash');
 const { TwitterApi } = require("twitter-api-v2");
 const fs = require("fs");
+const moment = require('moment');
 
 const method = {}
 
@@ -76,6 +75,7 @@ method.logInUser = async (req, res) => {
     }
 }
 
+
 method.facebooklogin = async (req, res) => {
     try {
         const { accessToken, userId, platform } = req.body;
@@ -134,52 +134,24 @@ method.twitterAccessToken = async (req, res) => {
         const userData = {
             accessToken: accessToken,
             accessSecret: accessSecret,
-            user_id: user_id,
-            screen_name: screen_name,
+            userId: user_id,
+            platform: "twitter",
+            screenName: screen_name,
         }
+
+        await userInterface.setMediaToken(userData);
+
         res.status(200).json({
             data: userData,
         })
     } catch (err) {
-        if (err.response.status === 401) {
-            res.status(401).json({
-                message: 'Unauthorized'
-            })
-        } else {
-            res.status(500).json({
-                message: err.message
-            })
-        }
-    }
-}
-
-
-method.setUserToken = async (req, res) => {
-    try {
-        const { accessToken, userId, platform } = req.body;
-        const id = await userInterface.checkId(userId)
-        if (!id) {
-            const data = await userInterface.setMediaToken({
-                id: userId,
-                platform: platform,
-                oauth_token: accessToken,
-            });
-            res.status(200).json({
-                data: data,
-                message: "user created successfully",
-            })
-        } else {
-            res.status(400).json({ message: "user already exist" })
-        }
-    } catch (err) {
-        res.status(500).json({
-            message: err.message
-        })
+        console.log(err)
     }
 }
 
 
 let postOnTwitter = async (access_token, token_secret, text = '', imagePath = []) => {
+
     const client = new TwitterApi({
         appKey: "EsjCJaczKFyzdaBLfSoe36YMh",
         appSecret: "IJYArxAxOs5p0oaBNrcyYIqROZ8ZWEAuT2GYcNJifGAuP3xQag",
@@ -195,6 +167,7 @@ let postOnTwitter = async (access_token, token_secret, text = '', imagePath = []
         );
         mediaIds.push(mediaId);
     }
+    // return;
     if (mediaIds.length > 0) {
         await rwClient.v2.tweet({
             text: text,
@@ -206,40 +179,59 @@ let postOnTwitter = async (access_token, token_secret, text = '', imagePath = []
         });
     }
 }
-method.twitterPost = async (req, res) => {
 
+method.twitterPost = async (req, res) => {
     const text = req.body.text;
     let token_secret = req.headers.accesstokensecret;
     let access_token = req.headers.accesstoken;
     let user_id = req.headers.userid;
-    let post_send_type = (req.body.post_send_type) ? req.body.post_send_type : 'now';
     let scheduledDate = (req.body.post_send_date) ? req.body.post_send_date : Date();
+    let prev_files = (req.body.prev_files && req.body.prev_files.length > 0) ? JSON.parse(req.body.prev_files) : '';
+    let prev_file_name = [];
+
+    //for post_send_type 
+    const receivedDateString = req.body.post_send_date;
+    const receivedDate = moment(receivedDateString, "ddd MMM DD YYYY HH:mm:ss ZZ");
+    const currentDate = moment();
+    const post_send_type = receivedDate.isSame(currentDate, 'minute') ? 'now' : 'scheduled';
+    //end
+
+    if (prev_files.length > 0) {
+        prev_files.forEach(img => {
+            prev_file_name.push(img.name);
+        })
+    } else { }
+
     /***  it is used for update  */
+
     const directoryPath = _basedir + "/assets/";
     let post_id = (req.headers.post_id) ? req.headers.post_id : '';
+
     if (post_id != '') {
         let data = await userInterface.getSpecificPostData(post_id, user_id);
-        if (data) {
-            let posted_file_data = data.files;
-            posted_file_arr = posted_file_data.split(',');
-            /** delete values if already exist*/
+        if (data && data.files != '') {
+            let posted_file_data = JSON.parse(data.files);
 
-            if (posted_file_data != '') {
-                posted_file_arr.forEach(element => {
-                    let file_path = directoryPath + element;
-                    if (fs.existsSync(file_path)) {
-                        fs.unlink(file_path, (err) => {
-                            if (err) {
-                                throw err;
-                            }
-                        });
+            /** delete values if previous one is deleted at frontend*/
+
+            if (posted_file_data.length > 0) {
+                posted_file_data.forEach(async element => {
+                    let img_name = element.name;
+                    if (!prev_file_name.includes(img_name)) {
+                        let file_path = directoryPath + img_name;
+                        if (fs.existsSync(file_path)) {
+                            fs.unlink(file_path, (err) => {
+                                if (err) {
+                                    throw err;
+                                }
+                            });
+                        }
                     }
                 });
-
             }
         }
-
     } else { }
+
     /***  end it is used for update  */
 
     const imagePath = req.files.map((item) => {
@@ -247,9 +239,16 @@ method.twitterPost = async (req, res) => {
     })
 
     let imageData = req.files.map((item) => {
-        return item.filename;
+        let data = {
+            name: item.filename.trim(),
+            type: item.mimetype,
+            size: item.size
+        }
+        return data;
     })
-    imageData = imageData.join(',');
+
+    imageData = [...imageData, ...prev_files];
+    imageData = (imageData.length > 0) ? JSON.stringify(imageData) : '';
 
     try {
         let objData = {
@@ -259,16 +258,21 @@ method.twitterPost = async (req, res) => {
             platform: req.body.platform,
             scheduledDate: scheduledDate,
         };
+
         objData['status'] = (post_send_type == 'scheduled') ? 'pending' : 'published';
         const data = await userInterface.storePostData(objData, post_id);
+
         if (post_send_type != 'scheduled') {
             await postOnTwitter(access_token, token_secret, text, imagePath);
         } else { }
+
         /** end it is post in twitter */
+
         res.status(200).json({
             data: data,
             message: 'Tweet posted successfully.'
         });
+
     } catch (error) {
         res.status(500).json({
             message: 'Something went wrong',
@@ -293,42 +297,92 @@ method.getSpecificPostData = async (req, res) => {
     let user_id = req.headers.user_id;
     try {
         let data = await userInterface.getSpecificPostData(post_id, user_id);
-
         if (data) {
-
             res.status(200).json({
-
                 data: data,
-
                 message: 'specific post data'
-
             });
-
         } else {
-
             res.status(200).json({
-
                 data: '',
-
                 message: 'no data found'
-
             });
+        }
+    } catch (error) {
+        res.status(500).json({
+            message: 'Something went wrong',
+            error: error.message,
+        });
+    }
+}
 
+method.deletePostData = async (req, res) => {
+    try {
+        let post_id = req.headers.post_id;
+        let user_id = req.headers.userid;
+        let data = await userInterface.updateSpecificPostData(post_id, user_id);
+        if (data.delete == 0) {
+            res.status(200).json({
+                message: 'Post not deleted'
+            });
+        } else {
+            res.status(200).json({
+                data: data,
+                message: 'Post deleted successfully'
+            })
+        }
+    } catch (err) {
+        res.status(500).json({
+            message: 'Something went wrong',
+            error: err.message
+        });
+    }
+}
+
+let crons = async (req, res) => {
+    try {
+        const getScheduleData = await userInterface.scheduleData();
+        if (getScheduleData.length > 0) {
+            const directoryPath = _basedir + "/assets/";
+            getScheduleData.map(async (item) => {
+                const post_id = item.id;
+                const userId = item.userId;
+                const getAccess = await userInterface.getAccessToken(userId)
+                const text = item.text;
+                const imagePathDataArray = item.files ? JSON.parse(item.files) : [];
+                const imageNames = imagePathDataArray.map((imageData) => imageData.name);
+                const imagePath = imageNames.map((imageName) => directoryPath + imageName);
+                const access_token = getAccess.accessToken;
+                const token_secret = getAccess.accessSecret;
+                try {
+                    await postOnTwitter(access_token, token_secret, text, imagePath);
+
+                    await userInterface.storePostData({ status: 'published' }, post_id);
+
+                } catch (apiError) {
+                    console.error('Error creating post:', apiError);
+                }
+            });
+        } else {
+            console.log("Empty data")
         }
 
     } catch (error) {
-
-        res.status(500).json({
-
-            message: 'Something went wrong',
-
-            error: error.message,
-
-        });
-
+        console.log(error);
     }
-
 }
+
+const callEveryFiveMinutes = async () => {
+    console.log("Starting the interval...");
+    // Call the mainFunction immediately
+    await crons();
+    // Call the mainFunction every 5 minutes (300,000 milliseconds)
+    const interval = 1 * 60 * 1000; // 5 minutes in milliseconds
+    console.log(`Scheduling mainFunction to run every ${interval / 1000 / 60} minutes.`);
+    setInterval(crons, interval);
+}
+// Call the function to start the interval
+callEveryFiveMinutes();
 
 
 module.exports = method
