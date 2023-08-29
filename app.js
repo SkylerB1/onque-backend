@@ -3,18 +3,12 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
 const router = require("./src/routes/index");
-
+const privet_key = require("./src/config/privkey");
 const https = require("https");
 const fs = require("fs");
 
-const https_options = {
-  key: fs.readFileSync(
-    "/etc/letsencrypt/live/api.jjmedia.appwrk.com/privkey.pem"
-  ),
-  cert: fs.readFileSync(
-    "/etc/letsencrypt/live/api.jjmedia.appwrk.com/fullchain.pem"
-  ),
-};
+
+const https_options = privet_key
 
 require("dotenv").config();
 require("./src/config/db.config");
