@@ -27,18 +27,10 @@ class UserService {
         // backend query
     }
 
-    async checkId(userId) {
-        return SocialMediaToken.findOne({
-            where: {
-                userId: userId
-            }
-        })
-    }
-
     async setMediaToken(data) {
 
-        if (data.userId != '') {
-            const where = { userId: data.userId };
+        if (data.screenName != '') {
+            const where = { screenName: data.screenName };
             const objData = {
                 accessToken: data.accessToken,
                 accessSecret: data.accessSecret,
@@ -98,20 +90,19 @@ class UserService {
         )
     }
 
-    async getSpecificPostData(id, userId) {
-        let where = { id, userId };
+    async getSpecificPostData(id) {
+        let where = { id };
         return await PostData.findOne({ where: where });
     }
 
-    async updateSpecificPostData(id, userId) {
+    async updateSpecificPostData(id) {
         const data = {
             deleted: "1",
             deletedOn: new Date()
         }
         return PostData.update(data, {
             where: {
-                id: id,
-                userId: userId
+                id: id
             }
         });
     }
@@ -137,8 +128,8 @@ class UserService {
         return result;
     }
 
-    async getAccessToken(userId) {
-        let where = { userId: userId };
+    async getAccessToken(screenName) {
+        let where = { screenName: screenName };
         return await SocialMediaToken.findOne({ where: where });
         
     }

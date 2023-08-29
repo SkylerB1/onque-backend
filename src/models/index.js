@@ -4,7 +4,7 @@ const db = require("../config/db.config");
 require("./Users");
 require("./SocialMediaToken")
 require("./PostData")
-require("./mediaFile")
+// require("./mediaFile")
 
 db.sync({alter: false}).then(() => {
     console.log('db connected');
