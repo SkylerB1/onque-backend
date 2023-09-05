@@ -14,6 +14,7 @@ const {
 } = require("../controller/twitterController");
 const { uplodYouTubeVideo } = require("../controller/youTubeController");
 const { google } = require("googleapis");
+const { googleBusinessPost } = require("./googleBusinessController");
 
 const method = {};
 
@@ -144,8 +145,12 @@ method.mediaPost = async (req, res) => {
 
     if (platform === "twitter") {
       const data = await twitterPost(req, res);
-    } else if (platform === "youtube") {
+    } 
+    if (platform === "youtube") {
       const data = await uplodYouTubeVideo(req, res);
+    }
+    if (platform === "google-business") {
+      const data = await googleBusinessPost(req, res);
     }
   } catch (err) {
     console.log(err);
