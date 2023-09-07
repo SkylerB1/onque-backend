@@ -42,7 +42,6 @@ const postOnTwitter = async (
     await rwClient.v2.tweet({
       text: text,
     });
-    console.log("first");
   }
 };
 

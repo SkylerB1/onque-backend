@@ -169,7 +169,6 @@ const uplodYouTubeVideo = async (req, res) => {
         },
         requestBody: videoMetadata,
       });
-      console.log("Video uploaded:", response.data);
       res.send("Video uploaded successfully!");
     } else {
       res.status(200).json({
