@@ -16,8 +16,6 @@ const getGoogleBusinessAuthUrl = async (req, res) => {
   try {
     const accessToken = req.headers.accesstoken;
     const platform = req.headers.platform;
-    // console.log(accessToken, platform)
-    // return
 
     const response = await axios.get(
       "https://mybusinessaccountmanagement.googleapis.com/v1/accounts",
@@ -36,13 +34,11 @@ const getGoogleBusinessAuthUrl = async (req, res) => {
       platform: platform,
       screenName: response.data.accounts[0].name,
     };
-    console.log(userData);
     await userInterface.setMediaToken(userData);
   } catch (error) {
     console.error("Error fetching business info:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
-  //   console.log(req.body);
 };
 
 const googleBusinessPost = async (req, res) => {
@@ -61,7 +57,6 @@ const googleBusinessPost = async (req, res) => {
   }catch(err){
 
   }
-  // console.log(req, req.body);
 };
 
 module.exports = { getGoogleBusinessAuthUrl, googleBusinessPost };

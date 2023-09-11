@@ -15,6 +15,7 @@ const {
 const { uplodYouTubeVideo } = require("../controller/youTubeController");
 const { google } = require("googleapis");
 const { googleBusinessPost } = require("./googleBusinessController");
+const mailer = require("@sendgrid/mail");
 
 const method = {};
 
@@ -63,29 +64,154 @@ method.register = async (req, res) => {
  */
 
 method.logInUser = async (req, res) => {
-  const verifiedEmail = await userInterface.checkEmail(req.body.email);
-  if (verifiedEmail) {
-    const verifiedPassword = await bcrypt.compare(
-      req.body.password,
-      verifiedEmail.password
-    );
-    if (verifiedPassword) {
-      const authToken = jwt.sign(
-        { user: verifiedEmail.id },
-        process.env.SECRETKEY
+  try {
+    const verifiedEmail = await userInterface.checkEmail(req.body.email);
+    if (verifiedEmail) {
+      const verifiedPassword = await bcrypt.compare(
+        req.body.password,
+        verifiedEmail.password
       );
-      res.status(200).json({
-        data: { id: verifiedEmail.id, email: verifiedEmail.email },
-        token: authToken,
-        message: "user Login successfully",
-      });
+      if (verifiedPassword) {
+        const authToken = jwt.sign(
+          { user: verifiedEmail.id },
+          process.env.SECRETKEY
+        );
+
+        res.status(200).json({
+          data: { id: verifiedEmail.id, email: verifiedEmail.email },
+          token: authToken,
+          message: "user Login successfully",
+        });
+      } else {
+        console.log(res);
+        res.status(400).json({ message: "Invalid credentials" });
+      }
     } else {
-      res.status(400).json({ message: "user not exist" });
+      res.status(400).json({ message: " this email is not exist" });
     }
-  } else {
-    res.status(400).json({ message: " this email is not exist" });
+  } catch (error) {
+    res.status(500).json({ message: "Something went wrong" });
   }
 };
+
+method.sendEmail = async (req, res) => {
+  try {
+    const email = req.body.email;
+    const verifiedEmail = await userInterface.checkEmail(email);
+    if (verifiedEmail) {
+      // Insert your API key here
+      mailer.setApiKey(
+        "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"
+      );
+
+      // Setting configurations
+      const msg = {
+        to: email,
+        from: "helder.g@appwrk.com",
+        subject: "Password Reset Request",
+        html: `
+      <html>
+        <head>
+          <style>
+            /* Add your CSS styles here */
+            body {
+              font-family: Arial, sans-serif;
+            }
+            .container {
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              text-align: center;
+            }
+            .logo {
+              margin-bottom: 20px;
+            }
+            .message {
+              font-size: 18px;
+              margin-bottom: 20px;
+            }
+            .button {
+              display: inline-block;
+              padding: 10px 20px;
+              background-color: #C65880;
+              color: #fff;
+              text-decoration: none;
+              border-radius: 5px;
+              font-weight: bold;
+            }
+            .myMail{
+              color: blue;
+              text-decoration: underline;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>OnQue</h1>
+            <p class="message">
+            You're getting this email because you requested recover your account. If you didn't intend to do this, just ignore this email.</p>
+            <a href="http://localhost:3000/setting/iIdentification?email=${email}" class="button">
+            Recover my password
+            </a>
+            <p class="myMail"><a>${email}</a></p>            
+          </div>
+        </body>
+      </html>
+    `,
+      };
+      // Sending mail
+      mailer.send(msg, function (err, json) {
+        if (err) {
+          console.log(err);
+
+          // Writing error message
+          res.write("Can't send message sent");
+        } else {
+          // Writing success message
+          res.write("Message sent");
+        }
+      });
+
+      res.status(200).json({ message: "Email send successfully, Please check your Mail" });
+      res.end();
+
+    } else {
+      res.status(400).json({ message: "Invalid email" });
+    }
+  } catch (error) {}
+};
+
+method.forgotPassword = async (req,res) => {
+  try {
+    const email = req.body.email;
+    const password = req.body.password;
+    const verifiedEmail = await userInterface.checkEmail(email);
+    if(verifiedEmail){
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const userData = {
+        email: email,
+        password: hashedPassword
+      }
+      const data = await userInterface.updatePassword(userData);
+      if(data.success){
+        res.status(200).json({
+          data: data.body,
+          msg: data.message,
+          success: data.success
+        })
+      } else {
+        res.status(400).json({
+          msg: data.error,
+          success: data.success
+        })
+      }
+    }    
+  } catch (error) {
+    
+  }
+
+}
 
 method.twitterLogin = (req, res) => {
   request.post(
@@ -145,7 +271,7 @@ method.mediaPost = async (req, res) => {
 
     if (platform === "twitter") {
       const data = await twitterPost(req, res);
-    } 
+    }
     if (platform === "youtube") {
       const data = await uplodYouTubeVideo(req, res);
     }
@@ -239,9 +365,8 @@ const crons = async (req, res) => {
 
             await userInterface.storePostData({ status: "published" }, post_id);
           } else if (platform === "youtube") {
-          //   await uplodYouTubeVideo(access_token, text, imagePath);
-
-          // await userInterface.storePostData({ status: "published" }, post_id);
+            //   await uplodYouTubeVideo(access_token, text, imagePath);
+            // await userInterface.storePostData({ status: "published" }, post_id);
           }
         } catch (apiError) {
           console.error("Error creating post:", apiError);
