@@ -9,7 +9,7 @@ router.post('/register', validator(userSchema.login, ValidationSource.BODY) ,Use
 router.post('/login', validator(userSchema.login, ValidationSource.BODY), UserController.logInUser)
 router.post('/send-email', UserController.sendEmail)
 router.patch('/forgot-password', UserController.forgotPassword)
-router.get('/getPostData', UserController.getPostData)
+router.get('/getPostData/:userId', UserController.getPostData)
 router.patch('/deletePost', UserController.deletePostData)
 
 module.exports = router;

@@ -126,6 +126,9 @@ method.sendEmail = async (req, res) => {
             .logo {
               margin-bottom: 20px;
             }
+            .headerLogo{              
+              color: #A7C7ED;
+            }
             .message {
               font-size: 18px;
               margin-bottom: 20px;
@@ -147,7 +150,7 @@ method.sendEmail = async (req, res) => {
         </head>
         <body>
           <div class="container">
-            <h1>OnQue</h1>
+            <h1 class="headerLogo">OnQue</h1>
             <p class="message">
             You're getting this email because you requested recover your account. If you didn't intend to do this, just ignore this email.</p>
             <a href="http://localhost:3000/setting/iIdentification?email=${email}" class="button">
@@ -172,46 +175,44 @@ method.sendEmail = async (req, res) => {
         }
       });
 
-      res.status(200).json({ message: "Email send successfully, Please check your Mail" });
+      res
+        .status(200)
+        .json({ message: "Email send successfully, Please check your Mail" });
       res.end();
-
     } else {
       res.status(400).json({ message: "Invalid email" });
     }
   } catch (error) {}
 };
 
-method.forgotPassword = async (req,res) => {
+method.forgotPassword = async (req, res) => {
   try {
     const email = req.body.email;
     const password = req.body.password;
     const verifiedEmail = await userInterface.checkEmail(email);
-    if(verifiedEmail){
+    if (verifiedEmail) {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const userData = {
         email: email,
-        password: hashedPassword
-      }
+        password: hashedPassword,
+      };
       const data = await userInterface.updatePassword(userData);
-      if(data.success){
+      if (data.success) {
         res.status(200).json({
           data: data.body,
           msg: data.message,
-          success: data.success
-        })
+          success: data.success,
+        });
       } else {
         res.status(400).json({
           msg: data.error,
-          success: data.success
-        })
+          success: data.success,
+        });
       }
-    }    
-  } catch (error) {
-    
-  }
-
-}
+    }
+  } catch (error) {}
+};
 
 method.twitterLogin = (req, res) => {
   request.post(
@@ -238,6 +239,7 @@ method.twitterAccessToken = async (req, res) => {
   try {
     const oauth_token = req.body.oauth_token;
     const oauth_verifier = req.body.oauth_verifier;
+    const userId = req.body.userId;
     const response = await axios.post(
       `https://api.twitter.com/oauth/access_token?oauth_verifier=${oauth_verifier}&oauth_token=${oauth_token}`
     );
@@ -247,7 +249,9 @@ method.twitterAccessToken = async (req, res) => {
     const accessSecret = data[1].split("=")[1];
     const user_id = data[2].split("=")[1];
     const screen_name = data[3].split("=")[1];
+    console.log(user_id)
     const userData = {
+      userId: userId === null ? user_id : userId,
       accessToken: accessToken,
       accessSecret: accessSecret,
       platform: "twitter",
@@ -255,9 +259,11 @@ method.twitterAccessToken = async (req, res) => {
     };
 
     await userInterface.setMediaToken(userData);
+    let twitterLoginData = await userInterface.getUserId(userData)
+    console.log(twitterLoginData, "let data =let data =let data =let data =")
 
     res.status(200).json({
-      data: userData,
+      data: twitterLoginData,
     });
   } catch (err) {
     res.status(500).json(err);
@@ -271,12 +277,48 @@ method.mediaPost = async (req, res) => {
 
     if (platform === "twitter") {
       const data = await twitterPost(req, res);
+      if (data.success) {
+        res.status(200).json({
+          data: data.body,
+          msg: data.message,
+          success: data.success,
+        });
+      } else {
+        res.status(400).json({
+          msg: data.error,
+          success: data.success,
+        });
+      }
     }
     if (platform === "youtube") {
       const data = await uplodYouTubeVideo(req, res);
+      if (data.success) {
+        res.status(200).json({
+          data: data.body,
+          msg: data.message,
+          success: data.success,
+        });
+      } else {
+        res.status(400).json({
+          msg: data.error,
+          success: data.success,
+        });
+      }
     }
     if (platform === "google-business") {
       const data = await googleBusinessPost(req, res);
+      if (data.success) {
+        res.status(200).json({
+          data: data.body,
+          msg: data.message,
+          success: data.success,
+        });
+      } else {
+        res.status(400).json({
+          msg: data.error,
+          success: data.success,
+        });
+      }
     }
   } catch (err) {
     console.log(err);
@@ -284,7 +326,8 @@ method.mediaPost = async (req, res) => {
 };
 
 method.getPostData = async (req, res) => {
-  let data = await userInterface.getPostData();
+  const userId = req.params.userId;
+  let data = await userInterface.getPostData(userId);
   if (data) {
     res.status(200).json({
       data: data,

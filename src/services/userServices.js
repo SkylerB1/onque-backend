@@ -65,6 +65,14 @@ class UserService {
     }
   }
 
+  async getUserId(data) {
+    const  accessSecret = data.accessSecret;
+    if (accessSecret) {
+      let where = { accessSecret: accessSecret};
+      return SocialMediaToken.findAll({ where: where });
+    }
+  }
+
   async storePostData(data, post_id) {
     // backend query
     /****  if post id exist then update or create */
@@ -86,10 +94,10 @@ class UserService {
     }
   }
 
-  async getPostData() {
-    let deleted = "0";
+  async getPostData(userId) {
+    const  deleted = "0";
     if (deleted) {
-      let where = { deleted: deleted };
+      let where = { deleted: deleted, userId: userId };
       return PostData.findAll({ where: where });
     }
   }

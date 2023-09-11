@@ -54,6 +54,7 @@ const twitterPost = async (req, res) => {
   const twitterHeaders = getHeaders("twitter");
   const text = req.body.text;
   let token_secret = twitterHeaders.accessTokenSecret;
+  let userId = req.body.userId;
   let access_token = twitterHeaders.accessToken;
   let screen_name = twitterHeaders.screenName;
   let scheduledDate = req.body.post_send_date
@@ -134,6 +135,7 @@ const twitterPost = async (req, res) => {
   imageData = imageData.length > 0 ? JSON.stringify(imageData) : "";
   try {
     let objData = {
+      userId: userId,
       screenName: screen_name,
       text: req.body.text,
       files: imageData,
