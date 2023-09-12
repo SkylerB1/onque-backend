@@ -1,13 +1,16 @@
 const { DataTypes } = require("sequelize");
 const db = require("../config/db.config");
-const PostData = require("./PostData");
 
 const SocialMediaToken = db.define("socialmediatocken", {
   id: {
     type: DataTypes.INTEGER,
     allowNull: true,
     primaryKey: true,
-    autoIncrement: true
+    autoIncrement: true,
+  },
+  userId: {
+    type: DataTypes.STRING,
+    allowNull: true,
   },
   screenName: {
     type: DataTypes.STRING,
@@ -27,14 +30,12 @@ const SocialMediaToken = db.define("socialmediatocken", {
   },
   createdAt: {
     type: DataTypes.DATE,
-    allowNull: true
+    allowNull: false,
   },
   updatedAt: {
     type: DataTypes.DATE,
-    allowNull: true
-  }
+    allowNull: true,
+  },
 });
-
-
 
 module.exports = SocialMediaToken;
