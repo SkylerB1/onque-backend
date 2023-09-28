@@ -1,7 +1,9 @@
+const { default: axios } = require("axios");
 const UserService = require("../services/userServices");
 const { google } = require("googleapis");
 const userInterface = new UserService();
 const moment = require("moment");
+const readline = require("readline");
 
 const getYouTubeAuthUrl = async (req, res) => {
   try {
@@ -38,17 +40,20 @@ const uplodYouTubeVideo = async (req, res) => {
     const youTubePresets = req.body.youTubePresets;
     const data = JSON.parse(youTubePresets);
 
+    const socialPresets = JSON.stringify(data);
+    let userId = req.body.userId;
+
     // Access individual properties
     const title = data.title;
     const category = data.category;
     const audienceConfiguration = data.audience_configuration;
-    const vissibility = data.vissibility;
+    const visibility = data.visibility;
 
-    //start for upload video in db
+    // Define the scheduled publish date and time
+    const scheduledDate = req.body.post_send_date
+      ? new Date(req.body.post_send_date)
+      : new Date();
 
-    let scheduledDate = req.body.post_send_date
-      ? req.body.post_send_date
-      : Date();
     let prev_files =
       req.body.prev_files && req.body.prev_files.length > 0
         ? JSON.parse(req.body.prev_files)
@@ -65,12 +70,11 @@ const uplodYouTubeVideo = async (req, res) => {
     const post_send_type = receivedDate.isSame(currentDate, "minute")
       ? "now"
       : "scheduled";
-    //end
+
     if (prev_files.length > 0) {
       prev_files.forEach((img) => {
         prev_file_name.push(img.name);
       });
-    } else {
     }
 
     /***  it is used for update  */
@@ -101,7 +105,6 @@ const uplodYouTubeVideo = async (req, res) => {
           });
         }
       }
-    } else {
     }
 
     /***  end it is used for update  */
@@ -118,8 +121,10 @@ const uplodYouTubeVideo = async (req, res) => {
     imageData = imageData.length > 0 ? JSON.stringify(imageData) : "";
 
     let objData = {
-      screenName: screen_name,
+      userId: userId,
+      screenName: youtubeHeaders.screenName,
       text: req.body.text,
+      socialPresets: socialPresets,
       files: imageData,
       platform: req.body.platform,
       scheduledDate: scheduledDate,
@@ -127,7 +132,6 @@ const uplodYouTubeVideo = async (req, res) => {
 
     objData["status"] = post_send_type == "scheduled" ? "pending" : "published";
     await userInterface.storePostData(objData, post_id);
-    //end
 
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
@@ -135,7 +139,7 @@ const uplodYouTubeVideo = async (req, res) => {
       process.env.GOOGLE_REDIRECT_URI
     );
     const credentials = {
-      access_token: youtubeHeaders.accessToken, // Assuming you've set up the user object in your authentication middleware
+      access_token: youtubeHeaders.accessToken,
     };
 
     oauth2Client.setCredentials(credentials);
@@ -152,33 +156,62 @@ const uplodYouTubeVideo = async (req, res) => {
         title: title,
         description: discription,
         tags: ["tag1", "tag2"],
-        categoryId: "22", // Category ID for "People & Blogs"
+        categoryId: "22",
       },
       status: {
-        privacyStatus: vissibility, // Set the privacy status of the video
+        privacyStatus: visibility, // Set the privacy status of the video
       },
     };
 
-    // Make the YouTube API call to upload the video
+    // Set the scheduled publish time in ISO 8601 format
+    if (post_send_type === "scheduled") {
+      videoMetadata.snippet.scheduledStartTime = scheduledDate.toISOString();
+    }
 
-    if (post_send_type != "scheduled") {
-      const response = await youtube.videos.insert({
+    if (post_send_type !== "scheduled") {
+      const data = await youtube.videos.insert({
         part: "snippet,status",
         media: {
           body: require("fs").createReadStream(req.files[0].path), // Use the uploaded file
         },
         requestBody: videoMetadata,
       });
-      res.send("Video uploaded successfully!");
+      if (res.status(200)) {
+        res.send("Video uploaded successfully!");
+      } else {
+        response.status(401).json({ data: response.data });
+      }
     } else {
+      const scheduledData = await youtube.videos.insert({
+        part: "snippet,status",
+        media: {
+          body: require("fs").createReadStream(req.files[0].path), // Use the uploaded file
+        },
+        requestBody: videoMetadata,
+        notifySubscribers: false, // Set to true if you want to notify subscribers
+      });
+
+      // Schedule the video for publishing
+      await youtube.videos.update({
+        part: "status",
+        requestBody: {
+          id: scheduledData.data.id,
+          status: {
+            privacyStatus: visibility, // Set the privacy status of the video
+            publishAt: scheduledDate.toISOString(), // Set the scheduled publish time
+          },
+        },
+      });
+
       res.status(200).json({
-        message: "Post scheduled successfully",
+        message: "Video scheduled successfully",
       });
     }
   } catch (error) {
-    console.error("Error uploading video:", error);
-    res.status(500).json({ success: false, error: "Upload failed" });
+    console.error("Error uploading video:", error.message);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 module.exports = { uplodYouTubeVideo, getYouTubeAuthUrl };
