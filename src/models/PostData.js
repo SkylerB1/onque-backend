@@ -21,6 +21,10 @@ const PostData = db.define("postData", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  socialPresets: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   files: {
     type: DataTypes.TEXT,
     allowNull: true,

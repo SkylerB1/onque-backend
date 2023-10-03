@@ -25,7 +25,6 @@ const method = {};
  * @param {object} req
  * @param {object} res
  * @since 18/06/2023
- * @author Aston | <from Appwrk>
  * @return {object} Json Response
  */
 
@@ -35,6 +34,7 @@ method.register = async (req, res) => {
     if (!verifiedEmail) {
       const hashedPassword = await bcrypt.hash(req.body.password, 10);
       const data = await userInterface.createUser({
+        userId: "",
         email: req.body.email,
         password: hashedPassword,
       });
@@ -58,7 +58,6 @@ method.register = async (req, res) => {
  * @param {object} req
  * @param {object} res
  * @since 18/06/2023
- * @author Aston | <from Appwrk>
  * @return {object} Json Response
  * Comment: This function take the data and authenticate the user
  */
@@ -78,7 +77,11 @@ method.logInUser = async (req, res) => {
         );
 
         res.status(200).json({
-          data: { id: verifiedEmail.id, email: verifiedEmail.email },
+          data: {
+            id: verifiedEmail.id,
+            userId: verifiedEmail.userId,
+            email: verifiedEmail.email,
+          },
           token: authToken,
           message: "user Login successfully",
         });
@@ -94,6 +97,13 @@ method.logInUser = async (req, res) => {
   }
 };
 
+/**
+ *
+ * @param {request} req
+ * @param {response} res
+ * @returns {object} returns the json response
+ * @comment This function send the e-mail to the user for the re-set the password
+ */
 method.sendEmail = async (req, res) => {
   try {
     const email = req.body.email;
@@ -175,16 +185,24 @@ method.sendEmail = async (req, res) => {
         }
       });
 
-      res
-        .status(200)
-        .json({ message: "Email send successfully, Please check your Mail" });
+      res.status(200).json({
+        message:
+          "If there's an existing account associated with this email, you will receive a recovery message shortly.",
+      });
       res.end();
     } else {
-      res.status(400).json({ message: "Invalid email" });
+      res.status(400).json({ message: "Please enter a valid email address!" });
     }
   } catch (error) {}
 };
 
+/**
+ *
+ * @param {request} req
+ * @param {response} res
+ * @returns {object} returns the json response
+ * @comment This function updates the user password
+ */
 method.forgotPassword = async (req, res) => {
   try {
     const email = req.body.email;
@@ -214,6 +232,13 @@ method.forgotPassword = async (req, res) => {
   } catch (error) {}
 };
 
+/**
+ *
+ * @param {request} req
+ * @param {Response} res
+ * @returns {Object} returns the json response
+ * @comment This function give the auth token and auth-verify token of twitter lpgin user
+ */
 method.twitterLogin = (req, res) => {
   request.post(
     {
@@ -235,23 +260,37 @@ method.twitterLogin = (req, res) => {
   );
 };
 
+/**
+ *
+ * @param {request} req
+ * @param {Response} res
+ * @returns {Object} returns the json response
+ */
 method.twitterAccessToken = async (req, res) => {
   try {
     const oauth_token = req.body.oauth_token;
     const oauth_verifier = req.body.oauth_verifier;
     const userId = req.body.userId;
+
+    // Specify the scope to request the email address
+    const scope = "email";
     const response = await axios.post(
-      `https://api.twitter.com/oauth/access_token?oauth_verifier=${oauth_verifier}&oauth_token=${oauth_token}`
+      `https://api.twitter.com/oauth/access_token?oauth_verifier=${oauth_verifier}&oauth_token=${oauth_token}&scope=${scope}`,
+      {
+        params: {
+          include_email: true,
+        },
+      }
     );
 
     const data = response.data.split("&");
+    // console.log(data, "and data is here ", response.data);
     const accessToken = data[0].split("=")[1];
     const accessSecret = data[1].split("=")[1];
     const user_id = data[2].split("=")[1];
     const screen_name = data[3].split("=")[1];
-    console.log(user_id)
     const userData = {
-      userId: userId === null ? user_id : userId,
+      userId: user_id,
       accessToken: accessToken,
       accessSecret: accessSecret,
       platform: "twitter",
@@ -259,8 +298,8 @@ method.twitterAccessToken = async (req, res) => {
     };
 
     await userInterface.setMediaToken(userData);
-    let twitterLoginData = await userInterface.getUserId(userData)
-    console.log(twitterLoginData, "let data =let data =let data =let data =")
+    await userInterface.updateUserId(userData);
+    let twitterLoginData = await userInterface.getUserId(userData);
 
     res.status(200).json({
       data: twitterLoginData,
@@ -276,49 +315,13 @@ method.mediaPost = async (req, res) => {
     const platform = req.body.platform;
 
     if (platform === "twitter") {
-      const data = await twitterPost(req, res);
-      if (data.success) {
-        res.status(200).json({
-          data: data.body,
-          msg: data.message,
-          success: data.success,
-        });
-      } else {
-        res.status(400).json({
-          msg: data.error,
-          success: data.success,
-        });
-      }
+      await twitterPost(req, res);
     }
     if (platform === "youtube") {
-      const data = await uplodYouTubeVideo(req, res);
-      if (data.success) {
-        res.status(200).json({
-          data: data.body,
-          msg: data.message,
-          success: data.success,
-        });
-      } else {
-        res.status(400).json({
-          msg: data.error,
-          success: data.success,
-        });
-      }
+      await uplodYouTubeVideo(req, res);
     }
     if (platform === "google-business") {
-      const data = await googleBusinessPost(req, res);
-      if (data.success) {
-        res.status(200).json({
-          data: data.body,
-          msg: data.message,
-          success: data.success,
-        });
-      } else {
-        res.status(400).json({
-          msg: data.error,
-          success: data.success,
-        });
-      }
+      await googleBusinessPost(req, res);
     }
   } catch (err) {
     console.log(err);
