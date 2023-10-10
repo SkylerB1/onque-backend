@@ -34,7 +34,6 @@ const uplodYouTubeVideo = async (req, res) => {
     const getHeaders = (platform) => {
       return headers.filter((headers) => headers.platform === platform)[0];
     };
-
     const youtubeHeaders = getHeaders("youtube");
     const discription = req.body.text;
     const youTubePresets = req.body.youTubePresets;

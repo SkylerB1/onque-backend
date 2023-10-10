@@ -167,7 +167,6 @@ const twitterPost = async (req, res) => {
       message: "Tweet posted successfully.",
     });
   } catch (error) {
-    console.log(error);
     // res.status(500).json({
     //   message: "Something went wrong",
     // });
@@ -175,12 +174,10 @@ const twitterPost = async (req, res) => {
 };
 
 const getAllTweeData = async (req, res) => {
-  // // console.log("getting all tweets data", req.headers);
   // try {
   //   const token = req.headers.accesstoken;
   //   const user_id = req.headers.user_id;
   //   const max_number = req.headers.max_number;
-  // // console.log("getting all tweets data", token,user_id, max_number);
   // // return
 
   //   const resp = await axios.get(
@@ -208,7 +205,6 @@ const getAllTweeData = async (req, res) => {
       console.error(err);
     } else {
       // Process the data returned from the API
-      console.log(data);
     }
   });
 };
