@@ -8,6 +8,10 @@ const Users = db.define("users", {
         primaryKey: true,
         autoIncrement: true
     },
+    userId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     email: {
         type: DataTypes.STRING,
         allowNull: false,

@@ -11,5 +11,6 @@ const SocialMediaRoute = require("./socialMediaRoute");
 router.use("/files", UploadRoute);
 router.use("/user", UserRoute);
 router.use("/auth", SocialMediaRoute);
+router.use("/social-media", SocialMediaRoute);
 
 module.exports = router;

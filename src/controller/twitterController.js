@@ -9,8 +9,16 @@ const { TwitterApi } = require("twitter-api-v2");
 const fs = require("fs");
 const moment = require("moment");
 const uploadYouTubeVideo = require("../controller/youTubeController");
+const Twit = require("twit");
 
 const method = {};
+
+const T = new Twit({
+  consumer_key: "weNnuWHuaoOLpFbsOY4sivVL1",
+  consumer_secret: "9xYuCgH3nBQJHvdVRi0fMLsKVhbwsVqYldO1sym1m0Di2WAkOj",
+  access_token: "1676849183414792192-wSvBnItcO5RuXT8qlg9XIVkJ4kXiQh",
+  access_token_secret: "ozeWeGg6b6KbebAIsWJ3ZiyYrqrptNmpipvkBYGUfj954",
+});
 
 const postOnTwitter = async (
   access_token,
@@ -166,4 +174,43 @@ const twitterPost = async (req, res) => {
   }
 };
 
-module.exports = { twitterPost, postOnTwitter };
+const getAllTweeData = async (req, res) => {
+  // // console.log("getting all tweets data", req.headers);
+  // try {
+  //   const token = req.headers.accesstoken;
+  //   const user_id = req.headers.user_id;
+  //   const max_number = req.headers.max_number;
+  // // console.log("getting all tweets data", token,user_id, max_number);
+  // // return
+
+  //   const resp = await axios.get(
+  //     `https://api.twitter.com/2/users/${user_id}/followers`,
+  //     {
+  //       headers: {
+  //         Authorization: "Bearer " + token,
+  //       },
+  //       params: {
+  //         // "user.fields": "name,username",
+  //         max_results: max_number,
+  //       },
+  //     }
+  //   );
+
+  //   res.json(resp.data);
+  // } catch (err) {
+  //   console.error(err);
+  //   res.status(500).json({ error: "An error occurred" });
+  // }
+  const screenName = "Astonk229068"; // Replace with the Twitter username you want to fetch followers for
+
+  T.get("followers/list", { screenName }, (err, data, response) => {
+    if (err) {
+      console.error(err);
+    } else {
+      // Process the data returned from the API
+      console.log(data);
+    }
+  });
+};
+
+module.exports = { twitterPost, postOnTwitter, getAllTweeData };

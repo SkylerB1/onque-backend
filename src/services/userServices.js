@@ -17,7 +17,9 @@ class UserService {
 
   async createUser(data) {
     // backend query
-    return Users.create(data);
+    const userData = Users.create(data);
+    console.log(userData)
+    return
   }
 
   async updatePassword(data) {
@@ -43,8 +45,10 @@ class UserService {
     }
   }
 
-  async logInUser() {
+  async updateUserId(data) {
     // backend query
+    const  userId = data.userId;
+    // console.log(userId, "++++++++++++++++")
   }
 
   async setMediaToken(data) {
@@ -69,7 +73,8 @@ class UserService {
     const  accessSecret = data.accessSecret;
     if (accessSecret) {
       let where = { accessSecret: accessSecret};
-      return SocialMediaToken.findAll({ where: where });
+      const data =  await SocialMediaToken.findAll({ where: where });
+     return(data)
     }
   }
 
