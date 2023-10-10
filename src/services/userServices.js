@@ -17,9 +17,9 @@ class UserService {
 
   async createUser(data) {
     // backend query
-    const userData = Users.create(data);
-    console.log(userData)
-    return
+    const userData = await Users.create(data);
+    console.log('user',userData)
+    return userData
   }
 
   async updatePassword(data) {
