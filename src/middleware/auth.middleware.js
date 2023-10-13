@@ -1,35 +1,27 @@
 const db = require("../config/db.config");
 const jwt = require("jsonwebtoken");
 
-const verifyLogin = (req, res, next) => {
-    let token = req.header('Authorization');
-    if (!token) return res.status(401).send("Access Denied");
 
+const verifyToken = (request, response, next) => {
+    const token = request.body.token || request.query.token || request.headers["x-access-token"];
+    if (!token) {
+        return response.status(403).json({
+            status: 403,
+            message: "A token is required for authentication"
+        });
+    }
     try {
-        if (token.startsWith('Bearer ')) {
-            // Remove Bearer from string
-            token = token.slice(7, token.length).trimLeft();
-        }
-        const verified = jwt.verify(token, db.TOKEN_SECRET); 
-        if( verified.user_type_id === 2 ){ // Check authorization, 2 = Customer, 1 = Admin
-            let req_url = req.baseUrl+req.route.path;
-            if(req_url.includes("users/:id") && parseInt(req.params.id) !== verified.id){
-                return res.status(401).send("Unauthorized!");
-            }
-        }
-        req.user = verified;
-        next();
+        const decoded = jwt.verify(token, process.env.SECRETKEY);
+        request.user = decoded
+    } catch (err) {
+        return response.status(401).json({
+            status: 401,
+            message: "Invalid Token"
+        });
     }
-    catch (err) {
-        res.status(400).send("Invalid Token");
-    }
-}
-module.exports = verifyLogin
+    return next();
+};
 
+ 
 
-// exports.adminOnly = async function (req, res, next) {
-//     if( req.user.user_type_id === 2 ){
-//         return res.status(401).send("Unauthorized!");
-//     }  
-//     next();
-// }
+module.exports = verifyToken;

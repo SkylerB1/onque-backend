@@ -5,9 +5,6 @@ const jwt = require("jsonwebtoken");
 var request = require("request");
 const { default: axios } = require("axios");
 const _ = require("lodash");
-const { TwitterApi } = require("twitter-api-v2");
-const fs = require("fs");
-const moment = require("moment");
 const {
   twitterPost,
   postOnTwitter,
@@ -34,7 +31,6 @@ method.register = async (req, res) => {
     if (!verifiedEmail) {
       const hashedPassword = await bcrypt.hash(req.body.password, 10);
       const data = await userInterface.createUser({
-        userId: "",
         email: req.body.email,
         password: hashedPassword,
       });
@@ -49,7 +45,8 @@ method.register = async (req, res) => {
       res.status(400).json({ message: "user already exist" });
     }
   } catch (err) {
-    res.send({ message: "Somithing wrong" }).status(500);
+    console.log(err)
+    res.status(500).send({ message: "Somithing wrong" });
   }
 };
 
@@ -72,7 +69,7 @@ method.logInUser = async (req, res) => {
       );
       if (verifiedPassword) {
         const authToken = jwt.sign(
-          { user: verifiedEmail.id },
+          { id: verifiedEmail.id, email: verifiedEmail.email},
           process.env.SECRETKEY
         );
 
@@ -86,7 +83,6 @@ method.logInUser = async (req, res) => {
           message: "user Login successfully",
         });
       } else {
-        console.log(res);
         res.status(400).json({ message: "Invalid credentials" });
       }
     } else {
@@ -163,7 +159,7 @@ method.sendEmail = async (req, res) => {
             <h1 class="headerLogo">OnQue</h1>
             <p class="message">
             You're getting this email because you requested recover your account. If you didn't intend to do this, just ignore this email.</p>
-            <a href="http://localhost:3000/setting/iIdentification?email=${email}" class="button">
+            <a href="https://jjmedia.appwrk.com//setting/iIdentification?email=${email}" class="button">
             Recover my password
             </a>
             <p class="myMail"><a>${email}</a></p>            
@@ -175,7 +171,6 @@ method.sendEmail = async (req, res) => {
       // Sending mail
       mailer.send(msg, function (err, json) {
         if (err) {
-          console.log(err);
 
           // Writing error message
           res.write("Can't send message sent");
@@ -284,7 +279,6 @@ method.twitterAccessToken = async (req, res) => {
     );
 
     const data = response.data.split("&");
-    // console.log(data, "and data is here ", response.data);
     const accessToken = data[0].split("=")[1];
     const accessSecret = data[1].split("=")[1];
     const user_id = data[2].split("=")[1];
@@ -306,7 +300,6 @@ method.twitterAccessToken = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json(err);
-    console.log(err);
   }
 };
 
@@ -324,7 +317,6 @@ method.mediaPost = async (req, res) => {
       await googleBusinessPost(req, res);
     }
   } catch (err) {
-    console.log(err);
   }
 };
 
@@ -419,10 +411,8 @@ const crons = async (req, res) => {
         }
       });
     } else {
-      console.log("Empty data");
     }
   } catch (error) {
-    console.log(error);
   }
 };
 
