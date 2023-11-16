@@ -10,9 +10,10 @@ const {
   postOnTwitter,
 } = require("../controller/twitterController");
 const { uplodYouTubeVideo } = require("../controller/youTubeController");
-const { google } = require("googleapis");
 const { googleBusinessPost } = require("./googleBusinessController");
 const mailer = require("@sendgrid/mail");
+const { LinkedInSharePost } = require("../utils/linkedin/LinkedInUtils");
+const Posts = require("../models/Posts");
 
 const method = {};
 
@@ -45,7 +46,7 @@ method.register = async (req, res) => {
       res.status(400).json({ message: "user already exist" });
     }
   } catch (err) {
-    console.log(err)
+    console.log(err);
     res.status(500).send({ message: "Somithing wrong" });
   }
 };
@@ -58,6 +59,14 @@ method.register = async (req, res) => {
  * @return {object} Json Response
  * Comment: This function take the data and authenticate the user
  */
+method.addPostData = async (req, res) => {
+  try {
+    const response = await userInterface.storePostData(req.body);
+    return res.status(200).json(response);
+  } catch (err) {
+    return res.status(400).json(err);
+  }
+};
 
 method.logInUser = async (req, res) => {
   try {
@@ -69,24 +78,22 @@ method.logInUser = async (req, res) => {
       );
       if (verifiedPassword) {
         const authToken = jwt.sign(
-          { id: verifiedEmail.id, email: verifiedEmail.email},
+          { id: verifiedEmail.id, email: verifiedEmail.email },
           process.env.SECRETKEY
         );
 
         res.status(200).json({
-          data: {
-            id: verifiedEmail.id,
-            userId: verifiedEmail.userId,
-            email: verifiedEmail.email,
-          },
-          token: authToken,
+          id: verifiedEmail.id,
+          userId: verifiedEmail.userId,
+          email: verifiedEmail.email,
+          access_token: authToken,
           message: "user Login successfully",
         });
       } else {
         res.status(400).json({ message: "Invalid credentials" });
       }
     } else {
-      res.status(400).json({ message: " this email is not exist" });
+      res.status(400).json({ message: "this email is not exist" });
     }
   } catch (error) {
     res.status(500).json({ message: "Something went wrong" });
@@ -171,7 +178,6 @@ method.sendEmail = async (req, res) => {
       // Sending mail
       mailer.send(msg, function (err, json) {
         if (err) {
-
           // Writing error message
           res.write("Can't send message sent");
         } else {
@@ -316,17 +322,14 @@ method.mediaPost = async (req, res) => {
     if (platform === "google-business") {
       await googleBusinessPost(req, res);
     }
-  } catch (err) {
-  }
+  } catch (err) {}
 };
 
 method.getPostData = async (req, res) => {
-  const userId = req.params.userId;
+  const userId = req.user?.id;
   let data = await userInterface.getPostData(userId);
   if (data) {
-    res.status(200).json({
-      data: data,
-    });
+    res.status(200).json(data);
   } else {
     res.status(400).json({ message: "No data found" });
   }
@@ -377,6 +380,69 @@ method.deletePostData = async (req, res) => {
   }
 };
 
+method.userConnections = async (req, res) => {
+  const userId = req.user?.id;
+  const attributes = ["id", "platform", "screenName"];
+  try {
+    const connections = await userInterface.getUserConnections(
+      userId,
+      attributes
+    );
+
+    return res.status(200).json(connections);
+  } catch (err) {
+    return res.status(400).json(err);
+  }
+};
+
+method.schedulePosts = async (req, res) => {
+  const userId = req.user?.id;
+  const data = req.body;
+  const { providers, caption, files, schduledDate } = data;
+
+  if (providers.length > 0) {
+    // for (item of providers) {
+    //   try {
+    //     const data = { caption: caption, files: files };
+    //     const platform = item.platform;
+    //     if (platform.includes("LinkedIn")) {
+    //       const response = await LinkedInSharePost(data, platform, userId);
+    //       console.log(response);
+    //       if (!response.success) {
+    //         return res.status(400).json(response.data);
+    //       }
+    //     }
+    //   } catch (err) {
+    //     return res.status(400).json(err);
+    //   }
+    // }
+    const postData = {
+      userId: userId,
+      text: caption,
+      files: files.map((item) => {
+        return { file: item.filename, type: item.mimetype };
+      }),
+      platform: providers.map((item) => {
+        return {
+          name: item.platform,
+          mediaType: item.mediaType,
+        };
+      }),
+      status: "Published",
+      schduledDate: schduledDate,
+    };
+    console.log(postData);
+    try {
+      const post = await Posts.create(postData, { returning: true });
+      return res.status(200).json(post);
+    } catch (err) {
+      return res.status(400).json(err);
+    }
+  } else {
+    return res.status(400).json({ msg: "No selected platform" });
+  }
+};
+
 const crons = async (req, res) => {
   try {
     const getScheduleData = await userInterface.scheduleData();
@@ -412,8 +478,7 @@ const crons = async (req, res) => {
       });
     } else {
     }
-  } catch (error) {
-  }
+  } catch (error) {}
 };
 
 const callEveryFiveMinutes = async () => {
