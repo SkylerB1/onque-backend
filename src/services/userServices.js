@@ -1,9 +1,10 @@
 const db = require("../models/index");
 const Users = require("../models/Users");
 const SocialMediaToken = require("../models/SocialMediaToken");
-const PostData = require("../models/PostData");
+const Posts = require("../models/Posts");
 const MediaFile = require("../models/mediaFile");
 const { Op } = require("sequelize");
+const { decryptToken } = require("../middleware/encryptToken");
 
 class UserService {
   async checkEmail(email) {
@@ -18,8 +19,8 @@ class UserService {
   async createUser(data) {
     // backend query
     const userData = await Users.create(data);
-    console.log('user',userData)
-    return userData
+    console.log("user", userData);
+    return userData;
   }
 
   async updatePassword(data) {
@@ -45,9 +46,18 @@ class UserService {
     }
   }
 
+  async getUserConnections(userId,attributes) {
+    return await SocialMediaToken.findAll({
+      attributes:attributes,
+      where: {
+        userId:userId
+      }
+    })
+  }
+
   async updateUserId(data) {
     // backend query
-    const  userId = data.userId;
+    const userId = data.userId;
     // console.log(userId, "++++++++++++++++")
   }
 
@@ -70,40 +80,43 @@ class UserService {
   }
 
   async getUserId(data) {
-    const  accessSecret = data.accessSecret;
+    const accessSecret = data.accessSecret;
     if (accessSecret) {
-      let where = { accessSecret: accessSecret};
-      const data =  await SocialMediaToken.findAll({ where: where });
-     return(data)
+      let where = { accessSecret: accessSecret };
+      const data = await SocialMediaToken.findAll({ where: where });
+      return data;
     }
   }
 
-  async storePostData(data, post_id) {
-    // backend query
-    /****  if post id exist then update or create */
-    let createRequired = 1;
-
-    if (post_id != "") {
-      let where = { id: post_id };
-      let getPostData = await PostData.findOne({ where: where });
-      if (getPostData) {
-        createRequired = 0;
-        return PostData.update(data, { where: where });
+  async storePostData(data) {
+    try {
+      if (data.post_id) {
+        try {
+          const where = { id: data.post_id };
+          const post = await Posts.findOne({ where: where });
+          const response = await Posts.update(data, { where: where });
+          return { status: true, data: response };
+        } catch (err) {
+          return { status: false, data: err };
+        }
+      } else {
+        try {
+          const response = await Posts.create(data);
+          return { status: true, data: response };
+        } catch (err) {
+          return { status: false, data: err };
+        }
       }
-    } else {
-      // post_id = data.id;
-    }
-
-    if (createRequired) {
-      return PostData.create(data);
+    } catch (err) {
+      return { status: false, data: err };
     }
   }
 
   async getPostData(userId) {
-    const  deleted = "0";
+    const deleted = "0";
     if (deleted) {
       let where = { deleted: deleted, userId: userId };
-      return PostData.findAll({ where: where });
+      return Posts.findAll({ where: where });
     }
   }
 
@@ -113,7 +126,7 @@ class UserService {
 
   async getSpecificPostData(id) {
     let where = { id };
-    return await PostData.findOne({ where: where });
+    return await Posts.findOne({ where: where });
   }
 
   async updateSpecificPostData(id) {
@@ -121,7 +134,7 @@ class UserService {
       deleted: "1",
       deletedOn: new Date(),
     };
-    return PostData.update(data, {
+    return Posts.update(data, {
       where: {
         id: id,
       },
@@ -133,7 +146,7 @@ class UserService {
     const status = "pending";
     const deleted = "0";
 
-    const result = await PostData.findAll({
+    const result = await Posts.findAll({
       where: {
         scheduledDate: {
           [Op.lte]: currentDate, // Use less than or equal operator
@@ -149,6 +162,16 @@ class UserService {
   async getAccessToken(screenName) {
     let where = { screenName: screenName };
     return await SocialMediaToken.findOne({ where: where });
+  }
+
+  async getTokenByIdPlatform(userId, platform) {
+    const userPlatform = await SocialMediaToken.findOne({
+      where: {
+        userId: userId,
+        platform: platform,
+      },
+    });
+    return decryptToken(userPlatform.credentials)
   }
 }
 

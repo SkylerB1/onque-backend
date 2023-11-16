@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const db = require("../config/db.config");
 
-const SocialMediaToken = db.define("socialmediatocken", {
+const SocialMediaToken = db.define("socialmediatoken", {
   id: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -9,32 +9,27 @@ const SocialMediaToken = db.define("socialmediatocken", {
     autoIncrement: true,
   },
   userId: {
-    type: DataTypes.STRING,
-    allowNull: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
   },
   screenName: {
     type: DataTypes.STRING,
     allowNull: true,
   },
   platform: {
-    type: DataTypes.STRING,
+    type: DataTypes.ENUM(
+      "Twitter",
+      "Facebook_Page",
+      "LinkedIn",
+      "LinkedIn_Page",
+      "YouTube",
+      "TikTok"
+    ),
     allowNull: false,
   },
-  accessToken: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  accessSecret: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  createdAt: {
-    type: DataTypes.DATE,
+  credentials: {
+    type: DataTypes.JSON,
     allowNull: false,
-  },
-  updatedAt: {
-    type: DataTypes.DATE,
-    allowNull: true,
   },
 });
 

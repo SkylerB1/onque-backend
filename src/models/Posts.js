@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const db = require("../config/db.config");
 const SocialMediaToken = require("./SocialMediaToken");
 
-const PostData = db.define("postData", {
+const Posts = db.define("posts", {
   id: {
     type: DataTypes.INTEGER,
     allowNull: true,
@@ -13,10 +13,6 @@ const PostData = db.define("postData", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  screenName: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
   text: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -26,16 +22,16 @@ const PostData = db.define("postData", {
     allowNull: true,
   },
   files: {
-    type: DataTypes.TEXT,
+    type: DataTypes.JSON,
     allowNull: true,
   },
   platform: {
-    type: DataTypes.STRING,
+    type: DataTypes.JSON,
     allowNull: false,
   },
   status: {
     type: DataTypes.ENUM,
-    values: ["published", "pending"],
+    values: ["Published", "Pending","Error"],
   },
   scheduledDate: {
     type: DataTypes.DATE,
@@ -60,6 +56,5 @@ const PostData = db.define("postData", {
   },
 });
 
-// PostData.hasMany(SocialMediaToken, { as: "socialmediatocken" });
 
-module.exports = PostData;
+module.exports = Posts;

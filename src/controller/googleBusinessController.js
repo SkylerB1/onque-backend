@@ -21,19 +21,12 @@ const getGoogleBusinessAuthUrl = async (req, res) => {
       }
     );
 
-    // res.json(response.data);
     const account = response.data.accounts[0];
-    // const accountName = account.accountName;
     const Id = account.name;
     const data = Id.split("/");
     const accountId = data[1];
     const forLocation = { accountId, accessToken, account };
     const loc = await getLocations(forLocation);
-    //  console.log(loc)
-    res.json({
-      data: response.data,
-      locationId: loc,
-    });
 
     const userData = {
       userId: response.data.accounts[0].name,
@@ -41,9 +34,9 @@ const getGoogleBusinessAuthUrl = async (req, res) => {
       accessSecret: "",
       platform: platform,
       screenName: response.data.accounts[0].accountName,
-      //  locations: loc,
     };
     await userInterface.setMediaToken(userData);
+    return res.json(loc);
   } catch (error) {
     console.error("Error fetching business info:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -54,7 +47,7 @@ const getLocations = async (forLocation) => {
   try {
     // return
     const resp = await axios.get(
-      `https://mybusinessbusinessinformation.googleapis.com/v1/${forLocation.account.name}/locations?readMask=name`,
+      `https://mybusinessbusinessinformation.googleapis.com/v1/${forLocation.account.name}/locations?readMask=name,title,storefrontAddress`,
       {
         headers: {
           Authorization: `Bearer ${forLocation.accessToken}`,
@@ -62,8 +55,6 @@ const getLocations = async (forLocation) => {
       }
     );
     if (resp.status === 200) {
-      // const locations = resp.data.name;
-      // console.log('Locations:', locations);
       const location = resp.data;
       return location;
     } else {
@@ -158,7 +149,10 @@ const googleBusinessActionMedia = async (
       ],
       // "topicType": "OFFER"
     };
-    console.log(postData,`https://mybusiness.googleapis.com/v4/${accountId}/${location}/localPosts`);
+    console.log(
+      postData,
+      `https://mybusiness.googleapis.com/v4/${accountId}/${location}/localPosts`
+    );
     const response = await axios.post(
       `https://mybusiness.googleapis.com/v4/${accountId}/${location}/localPosts`,
       postData,
