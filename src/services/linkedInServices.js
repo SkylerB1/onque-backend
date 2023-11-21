@@ -16,10 +16,8 @@ class LinkedInServices {
       let credentials;
       let screenName;
       if (platform === LinkedInPlatform) {
-        screenName = data.localizedFirstName + " " + data.localizedLastName;
+        screenName = data.name;
         credentials = {
-          first_name: data.localizedFirstName ?? "",
-          last_name: data.localizedLastName ?? "",
           owner_id: data.id ?? "",
           access_token: data?.access_token ?? "",
           expires_in: data.expires_in ?? "",

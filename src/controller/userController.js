@@ -1,6 +1,7 @@
 const UserService = require("../services/userServices");
 const userInterface = new UserService();
 const bcrypt = require("bcryptjs");
+const moment = require("moment");
 const jwt = require("jsonwebtoken");
 var request = require("request");
 const { default: axios } = require("axios");
@@ -14,6 +15,8 @@ const { googleBusinessPost } = require("./googleBusinessController");
 const mailer = require("@sendgrid/mail");
 const { LinkedInSharePost } = require("../utils/linkedin/LinkedInUtils");
 const Posts = require("../models/Posts");
+const cron = require("node-cron");
+const { createPost, publishPosts } = require("../utils/postUtils");
 
 const method = {};
 
@@ -398,99 +401,32 @@ method.userConnections = async (req, res) => {
 method.schedulePosts = async (req, res) => {
   const userId = req.user?.id;
   const data = req.body;
-  const { providers, caption, files, schduledDate } = data;
+  const { providers, scheduledDate } = data;
+  console.log(moment(scheduledDate));
+  const canPublish = moment(scheduledDate).isSameOrBefore(moment());
+
+  console.log("canPublish???", canPublish);
 
   if (providers.length > 0) {
-    // for (item of providers) {
-    //   try {
-    //     const data = { caption: caption, files: files };
-    //     const platform = item.platform;
-    //     if (platform.includes("LinkedIn")) {
-    //       const response = await LinkedInSharePost(data, platform, userId);
-    //       console.log(response);
-    //       if (!response.success) {
-    //         return res.status(400).json(response.data);
-    //       }
-    //     }
-    //   } catch (err) {
-    //     return res.status(400).json(err);
-    //   }
-    // }
-    const postData = {
-      userId: userId,
-      text: caption,
-      files: files.map((item) => {
-        return { file: item.filename, type: item.mimetype };
-      }),
-      platform: providers.map((item) => {
-        return {
-          name: item.platform,
-          mediaType: item.mediaType,
-        };
-      }),
-      status: "Published",
-      schduledDate: schduledDate,
-    };
-    console.log(postData);
-    try {
-      const post = await Posts.create(postData, { returning: true });
-      return res.status(200).json(post);
-    } catch (err) {
-      return res.status(400).json(err);
+    if (canPublish) {
+      var postStatus = await publishPosts(data, userId);
+
+      console.log("Post STatus>>>", postStatus);
+      if (!postStatus.success) {
+        console.log(postStatus);
+        return res.status(400).json(postStatus.data);
+      }
+    }
+    const response = await createPost(userId, data, postStatus?.data);
+    console.log("POST????", response);
+    if (response.success) {
+      return res.status(200).json(response.data);
+    } else {
+      return res.status(400).json(response.data);
     }
   } else {
     return res.status(400).json({ msg: "No selected platform" });
   }
 };
-
-const crons = async (req, res) => {
-  try {
-    const getScheduleData = await userInterface.scheduleData();
-    if (getScheduleData.length > 0) {
-      const directoryPath = _basedir + "/assets/";
-      getScheduleData.map(async (item) => {
-        const post_id = item.id;
-        const screenName = item.screenName;
-        const platform = item.platform;
-        const getAccess = await userInterface.getAccessToken(screenName);
-        const text = item.text;
-        const imagePathDataArray = item.files ? JSON.parse(item.files) : [];
-        const imageNames = imagePathDataArray.map(
-          (imageData) => imageData.name
-        );
-        const imagePath = imageNames.map(
-          (imageName) => directoryPath + imageName
-        );
-        const access_token = getAccess.accessToken;
-        const token_secret = getAccess.accessSecret;
-        try {
-          if (platform === "twitter") {
-            await postOnTwitter(access_token, token_secret, text, imagePath);
-
-            await userInterface.storePostData({ status: "published" }, post_id);
-          } else if (platform === "youtube") {
-            //   await uplodYouTubeVideo(access_token, text, imagePath);
-            // await userInterface.storePostData({ status: "published" }, post_id);
-          }
-        } catch (apiError) {
-          console.error("Error creating post:", apiError);
-        }
-      });
-    } else {
-    }
-  } catch (error) {}
-};
-
-const callEveryFiveMinutes = async () => {
-  console.log("Starting the interval...");
-  await crons();
-  const interval = 1 * 60 * 1000; // 5 minutes in milliseconds
-  console.log(
-    `Scheduling mainFunction to run every ${interval / 1000 / 60} minutes.`
-  );
-  setInterval(crons, interval);
-};
-// Call the function to start the interval
-callEveryFiveMinutes();
 
 module.exports = method;

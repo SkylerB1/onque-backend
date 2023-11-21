@@ -22,7 +22,7 @@ const linkedinToken = async (req, res) => {
       if (profile.success) {
         res.status(200).json(profile.data);
         const data = { ...token.data, ...profile.data };
-        await service.setMediaToken(data, userId);
+        await service.setMediaToken(data, userId,LinkedInPlatform);
       } else {
         res.status(400).json(profile.data);
       }
@@ -81,7 +81,9 @@ const linkedInConnect = async (req, res) => {
       platform
     );
     if (response.status) {
-      return res.status(200).json({ success: true });
+      const attributes = ["id", "platform", "screenName"];
+      const connections = await userService.getUserConnections(userId,attributes)
+      return res.status(200).json(connections);
     } else {
       return res.status(400).json(response.data);
     }
