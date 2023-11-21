@@ -42,7 +42,7 @@ const LinkedInSharePost = async (data, platformType, userId) => {
       return { success: false, data: response.data };
     }
   } catch (err) {
-    // console.log(err);
+    console.log(err);
     return { success: false, data: response.data };
   }
 };

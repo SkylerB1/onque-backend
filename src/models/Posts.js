@@ -31,7 +31,8 @@ const Posts = db.define("posts", {
   },
   status: {
     type: DataTypes.ENUM,
-    values: ["Published", "Pending","Error"],
+    values: ["Ongoing", "Pending", "Published", "Error"],
+    allowNull: false,
   },
   scheduledDate: {
     type: DataTypes.DATE,
