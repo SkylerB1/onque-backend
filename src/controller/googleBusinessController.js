@@ -5,12 +5,15 @@ const moment = require("moment");
 const { OAuth2Client } = require("google-auth-library");
 const axios = require("axios");
 const { el } = require("date-fns/locale");
+const { encryptToken, decryptToken } = require("../middleware/encryptToken");
+const googleBusinessServices = require('../services/googlebusinessServices')
 
 
 const getGoogleBusinessAuthUrl = async (req, res) => {
   try {
     const accessToken = req.headers.accesstoken;
     const platform = req.headers.platform;
+    const id = req.headers.loginid;
 
     const response = await axios.get(
       "https://mybusinessaccountmanagement.googleapis.com/v1/accounts/",
@@ -27,15 +30,31 @@ const getGoogleBusinessAuthUrl = async (req, res) => {
     const accountId = data[1];
     const forLocation = { accountId, accessToken, account };
     const loc = await getLocations(forLocation);
+    const accountdata = response.data.accounts[0];
+    const accountLocationData = loc.locations[0];
+
+    const credentials = {
+      accountID: accountdata.name ?? "",
+      accountName: accountdata.accountName ?? "",
+      type: accountdata?.type ?? "",
+      verificationState: accountdata.verificationState ?? "",
+      locations: accountLocationData.name ?? "",
+      title: accountLocationData.title ?? "",
+      storefrontAddress: accountLocationData?.storefrontAddress ?? "",
+    };
+    const accountNumber = response.data.accounts[0].name;
+    const accountID = accountNumber.replace(/\D/g, '');
+
+    const encryptedCreds = encryptToken(credentials);
+
 
     const userData = {
-      userId: response.data.accounts[0].name,
-      accessToken: accessToken,
-      accessSecret: "",
+      userId: id,
+      credentials: encryptedCreds,
       platform: platform,
       screenName: response.data.accounts[0].accountName,
     };
-    await userInterface.setMediaToken(userData);
+     await googleBusinessServices.mediaData(userData);
     return res.json(loc);
   } catch (error) {
     console.error("Error fetching business info:", error);
@@ -68,7 +87,6 @@ const getLocations = async (forLocation) => {
 
 const googleBusinessPost = async (req, res) => {
   try {
-    // console.log(req)
     const headers = JSON.parse(req.headers.headersarraystring);
     const getHeaders = (platform) => {
       return headers.filter((headers) => headers.platform === platform)[0];
@@ -76,7 +94,6 @@ const googleBusinessPost = async (req, res) => {
 
     const googleBusinessHeaders = getHeaders("google-business");
     const accessToken = googleBusinessHeaders.accessToken;
-    // console.log(accessToken)
     const accountId = googleBusinessHeaders.businessName;
     const location = googleBusinessHeaders.location;
     const getMediaType = req.body.getMediaType;
@@ -85,8 +102,6 @@ const googleBusinessPost = async (req, res) => {
     const googleBusinessPresets = req.body.googleBusinessPresets;
     const businessData = JSON.parse(googleBusinessPresets);
     const file = req.files[0].path;
-    // console.log(req.body)
-    // console.log(accessToken,"first",accountId, "second",location, "third",getMediaType, summary, userId);
 
     const receivedDateString = req.body.post_send_date;
     const receivedDate = moment(
@@ -97,7 +112,6 @@ const googleBusinessPost = async (req, res) => {
     const post_send_type = receivedDate.isSame(currentDate, "minute")
       ? "now"
       : "scheduled";
-    console.log(post_send_type);
 
     if (getMediaType === "POST") {
       await googleBusinessActionMedia(
@@ -111,9 +125,7 @@ const googleBusinessPost = async (req, res) => {
         file
       );
     } else if (getMediaType === "OFFER") {
-      console.log("second");
     } else if (getMediaType === "EVENT") {
-      console.log("third");
     }
   } catch (err) {
     console.log(err);
@@ -131,9 +143,6 @@ const googleBusinessActionMedia = async (
   file
 ) => {
   try {
-    // console.log(accessToken, location, accountId,businessData, summary, userId, post_send_type);
-    // console.log(businessData, summary, userId, post_send_type);
-
     const postData = {
       languageCode: "en-US",
       summary: summary,
@@ -149,10 +158,6 @@ const googleBusinessActionMedia = async (
       ],
       // "topicType": "OFFER"
     };
-    console.log(
-      postData,
-      `https://mybusiness.googleapis.com/v4/${accountId}/${location}/localPosts`
-    );
     const response = await axios.post(
       `https://mybusiness.googleapis.com/v4/${accountId}/${location}/localPosts`,
       postData,
@@ -163,8 +168,6 @@ const googleBusinessActionMedia = async (
         },
       }
     );
-    console.log("Post successful:");
-    console.log(response.data);
   } catch (error) {
     console.error("Error posting to Google My Business API:", error);
   }

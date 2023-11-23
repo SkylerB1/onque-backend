@@ -19,7 +19,6 @@ class UserService {
   async createUser(data) {
     // backend query
     const userData = await Users.create(data);
-    console.log("user", userData);
     return userData;
   }
 
@@ -46,11 +45,11 @@ class UserService {
     }
   }
 
-  async getUserConnections(userId,attributes) {
+  async getUserConnections(userId, attributes) {
     return await SocialMediaToken.findAll({
-      attributes:attributes,
+      attributes: attributes,
       where: {
-        userId:userId
+        userId: userId
       }
     })
   }
@@ -58,20 +57,13 @@ class UserService {
   async updateUserId(data) {
     // backend query
     const userId = data.userId;
-    // console.log(userId, "++++++++++++++++")
   }
 
   async setMediaToken(data) {
     if (data.screenName != "") {
       const where = { screenName: data.screenName };
-      const objData = {
-        accessToken: data.accessToken,
-        accessSecret: data.accessSecret,
-      };
       const updateSocialToke = await SocialMediaToken.findOne({ where: where });
       if (updateSocialToke) {
-        return SocialMediaToken.update(objData, { where: where });
-      } else {
         return SocialMediaToken.create(data);
       }
     } else {

@@ -23,7 +23,8 @@ const SocialMediaToken = db.define("socialmediatoken", {
       "LinkedIn",
       "LinkedIn_Page",
       "YouTube",
-      "TikTok"
+      "TikTok",
+      "google_business"
     ),
     allowNull: false,
   },

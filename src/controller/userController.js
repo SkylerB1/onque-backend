@@ -402,23 +402,18 @@ method.schedulePosts = async (req, res) => {
   const userId = req.user?.id;
   const data = req.body;
   const { providers, scheduledDate } = data;
-  console.log(moment(scheduledDate));
   const canPublish = moment(scheduledDate).isSameOrBefore(moment());
 
-  console.log("canPublish???", canPublish);
 
   if (providers.length > 0) {
     if (canPublish) {
       var postStatus = await publishPosts(data, userId);
 
-      console.log("Post STatus>>>", postStatus);
       if (!postStatus.success) {
-        console.log(postStatus);
         return res.status(400).json(postStatus.data);
       }
     }
     const response = await createPost(userId, data, postStatus?.data);
-    console.log("POST????", response);
     if (response.success) {
       return res.status(200).json(response.data);
     } else {

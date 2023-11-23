@@ -3,11 +3,10 @@ const moment = require("moment");
 const UserController = require("../controller/userController");
 const { LinkedInSharePost } = require("./linkedin/LinkedInUtils");
 const { Op } = require("sequelize");
+const { googleBusinessPost } = require("../controller/googleBusinessController");
 
 const schedulePosts = async () => {
   const posts = await getAllPendingPosts();
-  // console.log("SchedulePost>>", posts);
-  // console.log(moment.utc());
   for (let post of posts) {
     try {
       const postData = {
@@ -17,7 +16,6 @@ const schedulePosts = async () => {
       };
       const response = await publishPosts(postData, post.userId);
 
-      console.log("Response???", response);
       await Posts.update(
         {
           platform: response.data,
@@ -36,7 +34,6 @@ const schedulePosts = async () => {
 };
 
 const createPost = async (userId, data, status) => {
-  console.log("PostStatus>>", status);
   const { caption, files, providers, scheduledDate } = data;
   const postData = {
     userId: userId,
@@ -55,7 +52,6 @@ const createPost = async (userId, data, status) => {
     status: status ? "Published" : "Pending",
     scheduledDate: scheduledDate,
   };
-  console.log(postData);
   try {
     const post = await Posts.create(postData, { returning: true });
     return { success: true, data: post };
@@ -74,13 +70,21 @@ const publishPosts = async (data, userId) => {
       const platform = item.platform;
       if (platform.includes("LinkedIn")) {
         const response = await LinkedInSharePost(shareData, platform, userId);
-        console.log(response);
         result.push({
           status: response.success ? "Published" : "Error",
           message: response.data,
           platform: platform,
         });
       }
+      // if (platform.includes("google_business")) {
+      //   const response = await googleBusinessPost(shareData, platform, userId);
+      //   console.log(response);
+      //   result.push({
+      //     status: response.success ? "Published" : "Error",
+      //     message: response.data,
+      //     platform: platform,
+      //   });
+      // }
     } catch (err) {
       return { success: false, data: err };
     }
