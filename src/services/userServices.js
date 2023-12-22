@@ -49,9 +49,10 @@ class UserService {
     return await SocialMediaToken.findAll({
       attributes: attributes,
       where: {
-        userId: userId
-      }
-    })
+        userId: userId,
+        isConnected: 1,
+      },
+    });
   }
 
   async updateUserId(data) {
@@ -161,9 +162,10 @@ class UserService {
       where: {
         userId: userId,
         platform: platform,
+        isConnected: 1,
       },
     });
-    return decryptToken(userPlatform.credentials)
+    return decryptToken(userPlatform.credentials);
   }
 }
 

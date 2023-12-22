@@ -3,7 +3,11 @@ const moment = require("moment");
 const UserController = require("../controller/userController");
 const { LinkedInSharePost } = require("./linkedin/LinkedInUtils");
 const { Op } = require("sequelize");
-const { googleBusinessPost } = require("../controller/googleBusinessController");
+const {
+  googleBusinessPost,
+} = require("../controller/googleBusinessController");
+const { FacebookSharePost } = require("./facebook/FacebookUtils");
+const { InstagramSharePost } = require("./instagram/InstagramUtils");
 
 const schedulePosts = async () => {
   const posts = await getAllPendingPosts();
@@ -35,17 +39,23 @@ const schedulePosts = async () => {
 
 const createPost = async (userId, data, status) => {
   const { caption, files, providers, scheduledDate } = data;
+
   const postData = {
     userId: userId,
     text: caption,
-    files: files.map((item) => {
-      return { filename: item.filename, mimetype: item.mimetype };
+    files: files?.map((item) => {
+      return {
+        filename: item.filename,
+        mimetype: item.mimetype,
+        size: item.size,
+      };
     }),
     platform:
       status ??
       providers.map((item) => {
         return {
           platform: item.platform,
+          mediaType: item.mediaType,
           status: "Pending",
         };
       }),
@@ -68,6 +78,7 @@ const publishPosts = async (data, userId) => {
     try {
       const shareData = { caption: caption, files: files };
       const platform = item.platform;
+      const mediaType = item.mediaType;
       if (platform.includes("LinkedIn")) {
         const response = await LinkedInSharePost(shareData, platform, userId);
         result.push({
@@ -75,6 +86,33 @@ const publishPosts = async (data, userId) => {
           message: response.data,
           platform: platform,
         });
+      } else if (platform.includes("Facebook")) {
+        const response = await FacebookSharePost(
+          shareData,
+          platform,
+          mediaType,
+          userId
+        );
+        result.push({
+          status: response.success ? "Published" : "Error",
+          message: response.data,
+          platform: platform,
+        });
+      } else if (platform.includes("Instagram")) {
+        const response = await InstagramSharePost(
+          shareData,
+          platform,
+          mediaType,
+          userId
+        );
+        result.push({
+          status: response.success ? "Published" : "Error",
+          message: response.data,
+          platform: platform,
+        });
+
+      } else {
+        return { success: false, data: "No platform configured" };
       }
       // if (platform.includes("google_business")) {
       //   const response = await googleBusinessPost(shareData, platform, userId);

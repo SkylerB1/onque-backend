@@ -20,6 +20,7 @@ const SocialMediaToken = db.define("socialmediatoken", {
     type: DataTypes.ENUM(
       "Twitter",
       "Facebook_Page",
+      "Instagram",
       "LinkedIn",
       "LinkedIn_Page",
       "YouTube",
@@ -32,6 +33,11 @@ const SocialMediaToken = db.define("socialmediatoken", {
     type: DataTypes.JSON,
     allowNull: false,
   },
+  isConnected: {
+    type: DataTypes.TINYINT,
+    allowNull: false,
+    defaultValue:1
+  }
 });
 
 module.exports = SocialMediaToken;

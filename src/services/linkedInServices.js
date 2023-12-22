@@ -1,6 +1,6 @@
 const { default: axios } = require("axios");
 const SocialMediaToken = require("../models/SocialMediaToken");
-const { readFileSync } = require("fs");
+const { readFileSync, createReadStream } = require("fs");
 const path = require("path");
 const { encryptToken, decryptToken } = require("../middleware/encryptToken");
 const {
@@ -9,6 +9,7 @@ const {
 } = require("../utils/CommonString");
 const { stringify } = require("querystring");
 const { response } = require("express");
+const fs = require("fs");
 
 class LinkedInServices {
   async setMediaToken(data, userId, platform) {
@@ -266,14 +267,25 @@ class LinkedInServices {
       return { status: false, data: err };
     }
   }
-  async shareVideo(data, creds) {
-    const accessToken = creds.accessToken;
+  async shareVideo(data, creds, platform) {
+    const accessToken = creds.access_token;
+    console.log("accessToken", accessToken);
     const VIDEO_URL =
       process.env.LINKEDIN_URL + "/videos?action=finalizeUpload";
-    const owner = `urn:li:person:${creds.owner_id}`;
+    const owner =
+      platform === LinkedInPlatform
+        ? `urn:li:person:${creds.owner_id}`
+        : `urn:li:organization:${creds.organization_id}`;
     const file = data?.files[0];
     const fileSize = file.size;
-    const isCaption = data.caption !== "" ? true : false;
+    const filePath = path.join(__dirname, `../../assets/${file?.filename}`);
+    const captionfileName = Date.now() + ".srt";
+    const captionFilePath = path.join(
+      __dirname,
+      `../../assets/${captionfileName}`
+    );
+    const captions = data.caption;
+    const isCaption = captions !== "" ? true : false;
 
     var register = await this.registerVideo(
       owner,
@@ -282,22 +294,43 @@ class LinkedInServices {
       isCaption
     );
 
+    console.log("Register??", register);
+
     if (!register?.status) {
       return { status: false, data: register.data };
     }
 
-    const uploadUrl = register.value.uploadInstructions[0].uploadUrl;
-    const videoId = register.value.video;
+    const uploadUrls = register.data.value?.uploadInstructions;
+    const videoId = register.data.value?.video;
 
-    const video = readFileSync(
-      path.join(__dirname, `../../assets/${file?.filename}`)
-    );
+    if (isCaption) {
+      const captionsUploadUrl = register.data.value.captionsUploadUrl;
+      await fs.promises.writeFile(captionFilePath, captions, (err) => {
+        if (err) {
+          console.error("Error writing file:", err);
+        } else {
+          console.log("SRT file created successfully:", captionFilePath);
+        }
+      });
+
+      const response = await this.uploadCaption(
+        captionsUploadUrl,
+        captionFilePath,
+        accessToken
+      );
+      console.log("CaptionResponse??", response);
+
+      if (!response.success) {
+        return { status: false, data: response.data };
+      }
+    }
 
     const uploadResponse = await this.uploadVideo(
-      uploadUrl,
-      video,
+      uploadUrls,
+      filePath,
       accessToken
     );
+    console.log(uploadResponse.data);
 
     if (uploadResponse.status) {
       try {
@@ -305,7 +338,7 @@ class LinkedInServices {
           finalizeUploadRequest: {
             video: videoId,
             uploadToken: "",
-            uploadedPartIds: [uploadResponse.data],
+            uploadedPartIds: uploadResponse.data,
           },
         };
         const response = await axios.post(VIDEO_URL, requestBody, {
@@ -315,10 +348,10 @@ class LinkedInServices {
             "X-Restli-Protocol-Version": "2.0.0",
           },
         });
-        console.log(response);
-        return { status: true, data: response.data };
+        console.log("Video Status", response.status);
+
+        return { status: true, data: videoId };
       } catch (err) {
-        console.log(err);
         return { status: false, data: err };
       }
     } else {
@@ -444,7 +477,7 @@ class LinkedInServices {
         },
       });
       if (response.status === 200) {
-        return response.data;
+        return { status: true, data: response.data };
       }
     } catch (err) {
       return { status: false, data: err };
@@ -462,28 +495,76 @@ class LinkedInServices {
       });
       return { status: true, data: response };
     } catch (err) {
-      console.log(err)
+      console.log(err);
       return {
         status: false,
         data: err,
       };
     }
   }
-  async uploadVideo(uploadUrl, video, accessToken) {
+  async uploadVideo(uploadUrls, filePath, accessToken) {
+    const etags = [];
+    for (const info of uploadUrls) {
+      const fileStream = createReadStream(filePath, {
+        encoding: "binary",
+        start: info.firstByte,
+        end: info.lastByte,
+      });
+
+      try {
+        const response = await axios.post(info.uploadUrl, fileStream, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "LinkedIn-Version": "202308",
+            "Content-Type": "application/octet-stream",
+          },
+        });
+        console.log(response.headers.etag);
+        etags.push(response.headers.etag);
+      } catch (err) {
+        console.log("UploadVideo Error", err.response);
+        return {
+          status: false,
+          data: err,
+        };
+      }
+    }
+    console.log(etags);
+    return { status: true, data: etags };
+  }
+
+  async uploadCaption(captionsUploadUrl, captionsFilePath, accessToken) {
+    const metadata = {
+      format: "SRT",
+      formattedForEasyReader: true,
+      largeText: true,
+      source: "USER_PROVIDED",
+      locale: {
+        variant: "AMERICAN",
+        country: "US",
+        language: "EN",
+      },
+      transcriptType: "CLOSED_CAPTION",
+    };
+
+    const formData = new FormData();
+    const filePath = await fs.promises.readFile(captionsFilePath);
+    const blob = new Blob([filePath], { type: "text/plain" });
+    formData.append("metadata", JSON.stringify(metadata));
+    formData.append("file", blob);
+
     try {
-      const response = await axios.post(uploadUrl, video, {
+      const response = await axios.post(captionsUploadUrl, formData, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "LinkedIn-Version": "202308",
-          "Content-Type": "application/octet-stream",
+          "Content-Type": "multipart/form-data",
         },
       });
-      return { status: true, data: response.headers.etag };
+      return { success: true, data: response.data };
     } catch (err) {
-      return {
-        status: false,
-        data: err,
-      };
+      console.log("uploadCaptionsError", JSON.stringify(err.response));
+      return { success: false, data: "Error uploading captions" };
     }
   }
 }

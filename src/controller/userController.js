@@ -404,7 +404,6 @@ method.schedulePosts = async (req, res) => {
   const { providers, scheduledDate } = data;
   const canPublish = moment(scheduledDate).isSameOrBefore(moment());
 
-
   if (providers.length > 0) {
     if (canPublish) {
       var postStatus = await publishPosts(data, userId);

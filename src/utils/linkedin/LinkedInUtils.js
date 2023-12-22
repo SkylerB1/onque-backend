@@ -32,9 +32,9 @@ const LinkedInSharePost = async (data, platformType, userId) => {
     if (data.files && !isVideo) {
       response = await linkedInService.shareImage(data, creds, platform);
     } else if (data.files && isVideo) {
-      response = await linkedInService.shareVideo(data, creds);
+      response = await linkedInService.shareVideo(data, creds, platform);
     } else {
-      response = await linkedInService.shareText(data, creds);
+      response = await linkedInService.shareText(data, creds, platform);
     }
     if (response.status) {
       return { success: true, data: response.data };
