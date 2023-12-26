@@ -10,21 +10,17 @@ const {
 const service = new LinkedInServices();
 const userService = new UserService();
 
-
-
 const linkedinToken = async (req, res) => {
   try {
     const code = req.body?.code;
     const userId = req.user?.id;
     const token = await service.getAccessToken(code);
-    console.log(token.data);
     if (token.success) {
       const profile = await service.getProfile(token.data.access_token);
-      console.log(profile.data);
       if (profile.success) {
-        res.status(200).json(profile.data);
         const data = { ...token.data, ...profile.data };
-        await service.setMediaToken(data, userId,LinkedInPlatform);
+        await service.setMediaToken(data, userId, LinkedInPlatform, 0);
+        return res.status(200).json(profile.data);
       } else {
         res.status(400).json(profile.data);
       }
@@ -84,7 +80,10 @@ const linkedInConnect = async (req, res) => {
     );
     if (response.status) {
       const attributes = ["id", "platform", "screenName"];
-      const connections = await userService.getUserConnections(userId,attributes)
+      const connections = await userService.getUserConnections(
+        userId,
+        attributes
+      );
       return res.status(200).json(connections);
     } else {
       return res.status(400).json(response.data);
