@@ -1,4 +1,5 @@
 const express = require("express");
+const session = require("express-session");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const app = express();
@@ -6,6 +7,7 @@ const router = require("./src/routes/index");
 const path = require("path");
 const cron = require("node-cron");
 const { schedulePosts } = require("./src/utils/postUtils");
+const passport = require("passport");
 
 require("dotenv").config();
 require("./src/config/db.config");
@@ -18,12 +20,31 @@ var corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(
+  session({
+    secret: "dsbbddfnrieumcjb",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
 // body-parser
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 // global-route
 app.use("/api", router);
 app.use("/assets", express.static(path.join(__dirname, "assets")));
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+passport.serializeUser((user, cb) => {
+  cb(null, user);
+});
+
+passport.deserializeUser((obj, cb) => {
+  cb(null, obj);
+});
+
 
 cron.schedule("*/10 * * * * *", schedulePosts);
 

@@ -8,6 +8,8 @@ const {
 } = require("../controller/googleBusinessController");
 const { FacebookSharePost } = require("./facebook/FacebookUtils");
 const { InstagramSharePost } = require("./instagram/InstagramUtils");
+const SocialMediaToken = require("../models/SocialMediaToken");
+const { TwitterSharePost } = require("./twitter/TwitterUtils");
 
 const schedulePosts = async () => {
   const posts = await getAllPendingPosts();
@@ -110,7 +112,17 @@ const publishPosts = async (data, userId) => {
           message: response.data,
           platform: platform,
         });
-
+      } else if (platform.includes("Twitter")) {
+        const response = await TwitterSharePost(
+          shareData,
+          platform,
+          userId
+        );
+        result.push({
+          status: response.success ? "Published" : "Error",
+          message: response.data,
+          platform: platform,
+        });
       } else {
         return { success: false, data: "No platform configured" };
       }
@@ -174,4 +186,47 @@ const getAllPendingPosts = async () => {
   }
 };
 
-module.exports = { schedulePosts, createPost, publishPosts, getOngoingPosts };
+const saveConnection = async (encryptedCreds, userId, username, platform, isConnected = 1) => {
+  console.log({encryptedCreds, userId, username, platform, isConnected})
+  try {
+    const data = {
+      userId: userId,
+      credentials: encryptedCreds,
+      screenName: username,
+      platform: platform,
+      isConnected: isConnected,
+    };
+    const where = {
+      userId: userId,
+      platform: platform,
+    };
+    const IsToken = await SocialMediaToken.findOne({
+      where: where,
+    });
+
+    if (IsToken) {
+      return {
+        success: true,
+        data: await SocialMediaToken.update(data, {
+          where: where,
+          returning: true,
+        }),
+      };
+    } else {
+      return {
+        success: true,
+        data: await SocialMediaToken.create(data, { returning: true }),
+      };
+    }
+  } catch (err) {
+    return { success: false, data: err };
+  }
+};
+
+module.exports = {
+  schedulePosts,
+  createPost,
+  publishPosts,
+  getOngoingPosts,
+  saveConnection,
+};

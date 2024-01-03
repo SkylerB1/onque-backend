@@ -1,8 +1,6 @@
 const UserService = require("../../services/userServices");
 const moment = require("moment");
-const { REEL } = require("../CommonString");
 const InstagramService = require("../../services/InstagramService");
-const { URLSearchParams } = require("url");
 const instagramService = new InstagramService();
 const userService = new UserService();
 

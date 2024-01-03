@@ -19,11 +19,9 @@ class InstagramService {
       },
       accessToken
     );
-    console.log(uploadVideoUri);
     try {
       const uploadResponse = await axios.post(uploadVideoUri);
       const containerId = uploadResponse.data.id;
-      console.log(containerId);
 
       try {
         const publishResponse = await this.publishMedia(
@@ -33,11 +31,9 @@ class InstagramService {
         );
         return publishResponse;
       } catch (err) {
-        console.log(err);
         return { success: false, data: err.response.data };
       }
     } catch (err) {
-      console.log(err);
       return { success: false, data: err.response.data };
     }
   }
@@ -98,13 +94,11 @@ class InstagramService {
 
   async sharePost(data, userId, accessToken) {
     const { files, caption } = data;
-    console.log({ files, caption });
     let response;
     if (files.length === 1) {
       const filename = files[0].filename;
       const mimeType = files[0].mimetype;
       const file_url = `https://api.jjmedia.appwrk.com/assets/${filename}`;
-      console.log({mimeType})
       let media;
       if (mimeType.includes("image")) {
         // const file_url =
@@ -128,7 +122,6 @@ class InstagramService {
         },
         accessToken
       );
-      console.log({postMediaUri});
 
       try {
         const postResponse = await axios.post(postMediaUri);
@@ -139,12 +132,10 @@ class InstagramService {
         }
       } catch (err) {
         console.log(err);
-        console.log(err.response.data);
       }
     } else {
       response = await this.carouselPost(files, userId, caption, accessToken);
     }
-    console.log("FinalResponse", response);
 
     return response;
   }
@@ -242,7 +233,6 @@ class InstagramService {
       } 
     }
 
-    console.log({containerId})
 
     const statusChecks = containerId.map(async (id) => {
       const checkStatusUri = buildAPIURL(
@@ -254,7 +244,6 @@ class InstagramService {
       );
       return await isUploadSuccessful(0, checkStatusUri);
     });
-    console.log({statusChecks})
     const statuses = await Promise.all(statusChecks);
 
     const allFinished = statuses.every((status) => status);
@@ -270,9 +259,7 @@ class InstagramService {
           },
           accessToken
         );
-        console.log({ createCrouselUri });
         const response = await axios.post(createCrouselUri);
-        console.log("createCarouselResponse", response);
         if (response.status === 200) {
           const { id } = response.data;
           const result = await this.publishMedia(id, userId, accessToken);

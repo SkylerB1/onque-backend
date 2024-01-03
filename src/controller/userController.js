@@ -4,18 +4,7 @@ const bcrypt = require("bcryptjs");
 const moment = require("moment");
 const jwt = require("jsonwebtoken");
 var request = require("request");
-const { default: axios } = require("axios");
-const _ = require("lodash");
-const {
-  twitterPost,
-  postOnTwitter,
-} = require("../controller/twitterController");
-const { uplodYouTubeVideo } = require("../controller/youTubeController");
-const { googleBusinessPost } = require("./googleBusinessController");
 const mailer = require("@sendgrid/mail");
-const { LinkedInSharePost } = require("../utils/linkedin/LinkedInUtils");
-const Posts = require("../models/Posts");
-const cron = require("node-cron");
 const { createPost, publishPosts } = require("../utils/postUtils");
 
 const method = {};
@@ -51,23 +40,6 @@ method.register = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).send({ message: "Somithing wrong" });
-  }
-};
-
-/**
- *
- * @param {object} req
- * @param {object} res
- * @since 18/06/2023
- * @return {object} Json Response
- * Comment: This function take the data and authenticate the user
- */
-method.addPostData = async (req, res) => {
-  try {
-    const response = await userInterface.storePostData(req.body);
-    return res.status(200).json(response);
-  } catch (err) {
-    return res.status(400).json(err);
   }
 };
 
@@ -234,98 +206,6 @@ method.forgotPassword = async (req, res) => {
       }
     }
   } catch (error) {}
-};
-
-/**
- *
- * @param {request} req
- * @param {Response} res
- * @returns {Object} returns the json response
- * @comment This function give the auth token and auth-verify token of twitter lpgin user
- */
-method.twitterLogin = (req, res) => {
-  request.post(
-    {
-      url: "https://api.twitter.com/oauth/request_token",
-      oauth: {
-        oauth_callback: process.env.OAUTH_CALLBACKURL,
-        consumer_key: process.env.LIVE_TWITTER__CONSUMER_KEY,
-        consumer_secret: process.env.LIVE_TWITTER_CONSUMER_SECRET,
-      },
-    },
-    function (err, r, body) {
-      if (err) {
-        return res.send(500, { message: e.message });
-      }
-      var jsonStr =
-        '{ "' + body.replace(/&/g, '", "').replace(/=/g, '": "') + '"}';
-      res.send(JSON.parse(jsonStr));
-    }
-  );
-};
-
-/**
- *
- * @param {request} req
- * @param {Response} res
- * @returns {Object} returns the json response
- */
-method.twitterAccessToken = async (req, res) => {
-  try {
-    const oauth_token = req.body.oauth_token;
-    const oauth_verifier = req.body.oauth_verifier;
-    const userId = req.body.userId;
-
-    // Specify the scope to request the email address
-    const scope = "email";
-    const response = await axios.post(
-      `https://api.twitter.com/oauth/access_token?oauth_verifier=${oauth_verifier}&oauth_token=${oauth_token}&scope=${scope}`,
-      {
-        params: {
-          include_email: true,
-        },
-      }
-    );
-
-    const data = response.data.split("&");
-    const accessToken = data[0].split("=")[1];
-    const accessSecret = data[1].split("=")[1];
-    const user_id = data[2].split("=")[1];
-    const screen_name = data[3].split("=")[1];
-    const userData = {
-      userId: user_id,
-      accessToken: accessToken,
-      accessSecret: accessSecret,
-      platform: "twitter",
-      screenName: screen_name,
-    };
-
-    await userInterface.setMediaToken(userData);
-    await userInterface.updateUserId(userData);
-    let twitterLoginData = await userInterface.getUserId(userData);
-
-    res.status(200).json({
-      data: twitterLoginData,
-    });
-  } catch (err) {
-    res.status(500).json(err);
-  }
-};
-
-method.mediaPost = async (req, res) => {
-  try {
-    const platform = req.body.platform;
-
-    if (platform === "twitter") {
-      await twitterPost(req, res);
-    }
-    if (platform === "youtube") {
-      await uplodYouTubeVideo(req, res);
-    }
-    if (platform === "google-business") {
-      await googleBusinessPost(req, res);
-    }
-  } catch (err) {}
 };
 
 method.getPostData = async (req, res) => {
