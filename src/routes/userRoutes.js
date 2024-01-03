@@ -9,7 +9,6 @@ router.post('/register', validator(userSchema.login, ValidationSource.BODY) ,Use
 router.post('/login', validator(userSchema.login, ValidationSource.BODY), UserController.logInUser)
 router.post('/send-email', UserController.sendEmail)
 router.patch('/forgot-password', UserController.forgotPassword)
-router.post("/add-post-data", verifyToken, UserController.addPostData);
 router.get("/connections", verifyToken, UserController.userConnections)
 router.get('/getPostData', verifyToken, UserController.getPostData)
 router.post("/scheduler/posts",verifyToken,UserController.schedulePosts);
