@@ -14,7 +14,7 @@ const Brands = db.define("brands", {
   },
   brand_name: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   brand_file: {
     type: DataTypes.STRING,
