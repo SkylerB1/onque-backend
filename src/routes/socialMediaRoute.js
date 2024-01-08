@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+require("dotenv").config();
 const passport = require("passport");
 const UserController = require("../controller/userController");
 const LinkedInController = require("../controller/linkedInController");
@@ -11,6 +12,9 @@ const { verifyToken } = require("../middleware/auth.middleware");
 const { twitterStrategy } = require("../utils/twitter");
 const { youtubeStrategy } = require("../utils/youtube");
 
+const { REDIRECT_URL } = process.env
+
+
 
 router.get(
   "/youtube",
@@ -21,8 +25,8 @@ router.get(
 router.get(
   "/youtube/callback",
   passport.authenticate("youtube", {
-    successRedirect: process.env.REDIRECT_URL,
-    failureRedirect: process.env.REDIRECT_URL,
+    successRedirect: REDIRECT_URL,
+    failureRedirect: REDIRECT_URL,
   })
 );
 
@@ -31,14 +35,15 @@ router.get(
   twitterStrategy,
   passport.authenticate("twitter", {
     scope: ["tweet.read", "tweet.write", "users.read", "offline.access"],
+
   })
 );
 
 router.get(
   "/twitter/callback",
   passport.authenticate("twitter", {
-    successRedirect: process.env.REDIRECT_URL,
-    failureRedirect: process.env.REDIRECT_URL,
+    successRedirect: REDIRECT_URL,
+    failureRedirect: REDIRECT_URL,
   })
 );
 

@@ -17,7 +17,8 @@ const facebookPages = async (req, res) => {
       userID,
       accessToken
     );
-    console.log(pageData)
+    // console.log(pageData)
+    console.log("1")
     if (pageData.success) {
       for (let page of pageData.data) {
         await facebookService.setConnection(
@@ -27,12 +28,16 @@ const facebookPages = async (req, res) => {
           0,
           page.name
         );
+        console.log("3")
+
 
         const instaAccount = await facebookService.getInstagramAccount(
           page.id,
           page.access_token
         );
-        console.log(instaAccount)
+        // console.log(instaAccount)
+        console.log("2")
+
 
         if (instaAccount.data) {
           const data = {
@@ -40,6 +45,8 @@ const facebookPages = async (req, res) => {
             access_token: page.access_token,
             ...instaAccount.data,
           };
+          console.log("1", data)
+
           await facebookService.setConnection(
             data,
             userId,
@@ -47,11 +54,13 @@ const facebookPages = async (req, res) => {
             0,
             instaAccount.data.username
           );
+          console.log("first")
         }
 
         response.push({ id: page.id, name: page.name, profile: page.profile });
       }
     }
+    console.log(response, "wedfghujisdfghj")
 
     return res.status(pageData.status).json(response);
   } catch (err) {
@@ -62,11 +71,14 @@ const facebookConnect = async (req, res) => {
   try {
     const userId = req.user?.id;
     const data = req.body;
+    // console.log(userId,data)
 
     const response = await facebookService.connectPage(userId, data);
     if (response.success) {
+      // console.log(response)
       return res.status(200).json(response.data);
     } else {
+      // console.log(response)
       return res.status(400).json(response.data);
     }
   } catch (err) {
