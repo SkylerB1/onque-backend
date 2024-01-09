@@ -25,10 +25,12 @@ const encryptToken = (data) => {
 };
 
 const decryptToken = (data) => {
+  const parsedData = typeof (data) === "string" ? JSON.parse(data) : data;
   const algorithm = process.env.ENCYPTION_ALGORITHM;
   const key = process.env.ENCYPTION_KEY;
-  const iv = Buffer.from(data.iv, "hex");
-  const encryptedText = Buffer.from(data.encryptedData, "hex");
+  const iv = Buffer.from(parsedData.iv, "hex");
+
+  const encryptedText = Buffer.from(parsedData.encryptedData, "hex");
 
   // Creating Decipher
   let decipher = createDecipheriv(algorithm, Buffer.from(key, "hex"), iv);
@@ -36,6 +38,7 @@ const decryptToken = (data) => {
   // Updating encrypted text
   let decrypted = decipher.update(encryptedText);
   decrypted = Buffer.concat([decrypted, decipher.final()]);
+
   // returns data after decryption
   return JSON.parse(decrypted.toString("utf8"));
 };

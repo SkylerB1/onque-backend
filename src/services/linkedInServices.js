@@ -295,8 +295,6 @@ class LinkedInServices {
       isCaption
     );
 
-    console.log("Register??", register);
-
     if (!register?.status) {
       return { status: false, data: register.data };
     }

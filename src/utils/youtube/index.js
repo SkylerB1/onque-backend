@@ -43,6 +43,15 @@ const youtubeStrategy = async (req, res, next) => {
       }
     )
   );
+
+  passport.serializeUser((user, cb) => {
+    cb(null, user);
+  });
+
+  passport.deserializeUser((user, cb) => {
+    cb(null, user);
+  });
+
   next();
 };
 
