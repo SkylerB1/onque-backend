@@ -44,6 +44,7 @@ class FacebookService {
       userId: userId,
       screenName: name,
     };
+
     try {
       const response = await SocialMediaToken.update(data, {
         where: condition,
@@ -60,6 +61,7 @@ class FacebookService {
         for (let account of accounts) {
           const creds = decryptToken(account.credentials);
           const { pageId } = creds;
+
           if (pageId === id) {
             const updateCondition = {
               id: account.id,

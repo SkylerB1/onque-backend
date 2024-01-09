@@ -134,6 +134,11 @@ class UserService {
     });
   }
 
+  async logout(id) {
+    let where = { id };
+    return await SocialMediaToken.destroy({ where: where })
+  }
+
   async scheduleData() {
     const currentDate = new Date(); // Get the current date and time
     const status = "pending";

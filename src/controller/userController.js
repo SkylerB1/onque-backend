@@ -38,7 +38,6 @@ method.register = async (req, res) => {
       res.status(400).json({ message: "user already exist" });
     }
   } catch (err) {
-    console.log(err);
     res.status(500).send({ message: "Somithing wrong" });
   }
 };
@@ -169,7 +168,7 @@ method.sendEmail = async (req, res) => {
     } else {
       res.status(400).json({ message: "Please enter a valid email address!" });
     }
-  } catch (error) {}
+  } catch (error) { }
 };
 
 /**
@@ -205,7 +204,7 @@ method.forgotPassword = async (req, res) => {
         });
       }
     }
-  } catch (error) {}
+  } catch (error) { }
 };
 
 method.getPostData = async (req, res) => {
@@ -263,6 +262,21 @@ method.deletePostData = async (req, res) => {
   }
 };
 
+method.logoutSocialMedia = async (req, res) => {
+  try {
+    const loginId = req.params.id;
+    const data = await userInterface.logout(loginId)
+    res.status(200).json({
+      message: "Logout successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: "Something went wrong",
+      error: err.message,
+    });
+  }
+}
+
 method.userConnections = async (req, res) => {
   const userId = req.user?.id;
   const attributes = ["id", "platform", "screenName"];
@@ -277,6 +291,7 @@ method.userConnections = async (req, res) => {
     return res.status(400).json(err);
   }
 };
+
 
 method.schedulePosts = async (req, res) => {
   const userId = req.user?.id;

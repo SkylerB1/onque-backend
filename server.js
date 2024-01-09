@@ -13,6 +13,7 @@ require("dotenv").config();
 require("./src/config/db.config");
 require("./src/models/index");
 
+
 global._basedir = __dirname;
 
 var corsOptions = {
@@ -31,19 +32,13 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 // global-route
-app.use("/api", router);
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use(passport.initialize());
 app.use(passport.session());
+app.use("/api", router);
 
 
-passport.serializeUser((user, cb) => {
-  cb(null, user);
-});
 
-passport.deserializeUser((obj, cb) => {
-  cb(null, obj);
-});
 
 
 cron.schedule("*/10 * * * * *", schedulePosts);
