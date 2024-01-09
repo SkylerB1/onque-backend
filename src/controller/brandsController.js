@@ -15,8 +15,6 @@ methods.createBrand = async (req, res) => {
   try {
     const user_id = req?.user?.id;
     const brand_name = req?.body?.data?.brand_name
-    // console.log(brand_name)
-    // return
     const result = await brandServicesInterface.createBrand(brand_name, user_id);
 
     if (result.success) {
