@@ -12,7 +12,7 @@ const { response } = require("express");
 const fs = require("fs");
 
 class LinkedInServices {
-  async setMediaToken(data, userId, platform,isConnected=1) {
+  async setMediaToken(data, userId, brandId, platform, isConnected = 1) {
     try {
       let credentials;
       let screenName;
@@ -41,6 +41,7 @@ class LinkedInServices {
       const encryptedCreds = encryptToken(credentials);
       const objData = {
         userId: userId,
+        brandId: brandId,
         credentials: encryptedCreds,
         screenName: screenName,
         platform: platform,
@@ -94,6 +95,7 @@ class LinkedInServices {
     const data = await SocialMediaToken.findOne({
       where: condition,
     });
+
 
     return data;
   }

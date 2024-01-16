@@ -5,15 +5,16 @@ const { saveConnection } = require("../postUtils");
 const { YouTubePlatform } = require("../CommonString");
 
 const youtubeStrategy = async (req, res, next) => {
-  const { YOUTUBE_APP_ID, YOUTUBE_APP_SECRET, YOUTUBE_CALLBACK_URL } =
+  const {GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, YOUTUBE_APP_ID, YOUTUBE_APP_SECRET, YOUTUBE_CALLBACK_URL } =
     process.env;
   const userId = req.query.userId;
+  const brandId = req.query.brandId;
 
   passport.use(
     new Strategy(
       {
-        clientID: YOUTUBE_APP_ID,
-        clientSecret: YOUTUBE_APP_SECRET,
+        clientID: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
         callbackURL: YOUTUBE_CALLBACK_URL,
         scope: [
           "https://www.googleapis.com/auth/youtube.readonly",
@@ -31,6 +32,7 @@ const youtubeStrategy = async (req, res, next) => {
         const response = await saveConnection(
           encryptedCreds,
           userId,
+          brandId,
           profile.displayName,
           YouTubePlatform
         );

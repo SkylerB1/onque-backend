@@ -49,6 +49,7 @@ router.get(
 
 router.get("/get_specific_post_data", UserController.getSpecificPostData);
 router.post("/youtube", YouTubeController.getYouTubeAuthUrl);
+//google-business
 router.get(
   "/google-business/login",
   googleBusinessController.getGoogleBusinessAuthUrl
