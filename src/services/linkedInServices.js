@@ -96,6 +96,7 @@ class LinkedInServices {
       where: condition,
     });
 
+
     return data;
   }
   async getLinkedInPageToken(userId) {

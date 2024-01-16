@@ -63,14 +63,13 @@ const linkedInPages = async (req, res) => {
   } catch (err) {
     console.log(err);
   }
-};
+};  
 const linkedInConnect = async (req, res) => {
   try {
     const data = req?.body;
     const userId = req.user?.id;
     const brandId = req.query.brandId;
-    const platform =
-      req.query.type === "page" ? LinkedInPagePlatform : LinkedInPlatform;
+    const platform = req.query.type === "page" ? LinkedInPagePlatform : LinkedInPlatform;
 
     const userConnection = await service.getLinkedInCreds(userId, platform);
 
