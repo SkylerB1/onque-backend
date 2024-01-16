@@ -12,6 +12,10 @@ const SocialMediaToken = db.define("socialmediatoken", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  brandId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
   screenName: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -36,7 +40,7 @@ const SocialMediaToken = db.define("socialmediatoken", {
   isConnected: {
     type: DataTypes.TINYINT,
     allowNull: false,
-    defaultValue:1
+    defaultValue: 1
   }
 });
 

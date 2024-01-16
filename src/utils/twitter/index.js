@@ -19,6 +19,7 @@ const twitterStrategy = (req, res, next) => {
   })
   
   const userId = req.query.userId;
+  const brandId = req.query.brandId;
 
   passport.use(
     new Strategy(
@@ -38,6 +39,7 @@ const twitterStrategy = (req, res, next) => {
         const response = await saveConnection(
           encryptedCreds,
           userId,
+          brandId,
           profile.username,
           TwitterPlatform
         );

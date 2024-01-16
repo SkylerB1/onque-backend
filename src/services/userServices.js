@@ -45,11 +45,12 @@ class UserService {
     }
   }
 
-  async getUserConnections(userId, attributes) {
+  async getUserConnections(userId, brandId, attributes) {
     return await SocialMediaToken.findAll({
       attributes: attributes,
       where: {
         userId: userId,
+        brandId: brandId,
         isConnected: 1,
       },
     });

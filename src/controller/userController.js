@@ -6,6 +6,8 @@ const jwt = require("jsonwebtoken");
 var request = require("request");
 const mailer = require("@sendgrid/mail");
 const { createPost, publishPosts } = require("../utils/postUtils");
+const BrandServices = require('../services/brandsSevices');
+const brandServicesInterface = new BrandServices();
 
 const method = {};
 
@@ -28,7 +30,7 @@ method.register = async (req, res) => {
         password: hashedPassword,
       });
 
-      const authToken = jwt.sign({ user: data.id }, process.env.SECRETKEY);
+      const authToken = jwt.sign({ id: data.id }, process.env.SECRETKEY);
       res.status(200).json({
         data: data,
         token: authToken,
@@ -279,10 +281,13 @@ method.logoutSocialMedia = async (req, res) => {
 
 method.userConnections = async (req, res) => {
   const userId = req.user?.id;
-  const attributes = ["id", "platform", "screenName"];
+  const brandId = req.query?.brandId
+  console.log(brandId)
+  const attributes = ["id", "userId", "platform", "screenName", "brandId"];
   try {
     const connections = await userInterface.getUserConnections(
       userId,
+      brandId,
       attributes
     );
 
@@ -291,6 +296,16 @@ method.userConnections = async (req, res) => {
     return res.status(400).json(err);
   }
 };
+
+method.userBrand = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const selectedBrand = await brandServicesInterface.getSelectedBrand(userId);
+    return res.status(200).json(selectedBrand);
+  } catch (error) {
+    return res.status(400).json(err);
+  }
+}
 
 
 method.schedulePosts = async (req, res) => {

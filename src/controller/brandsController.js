@@ -45,6 +45,9 @@ methods.getUserSpecificBrands = async (req, res) => {
   try {
     const user_id = req?.user?.id;
     const result = await brandServicesInterface.getUserSpecificBrands(req?.query, user_id);
+    // const attributes = ["id", "userId", "platform", "screenName", "brandId"];
+    // const data = await brandServicesInterface.getConnectedMedia(req?.query, user_id, attributes);
+    // console.log(result)
 
     if (result.success) {
       const response = result.body;
