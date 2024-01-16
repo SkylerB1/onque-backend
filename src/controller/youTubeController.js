@@ -10,8 +10,10 @@ const getYouTubeAuthUrl = async (req, res) => {
     let access_token = req.headers.accesstoken;
     let screenName = req.headers.screenname;
     let platform = req.headers.platform;
+    const brandId = req.query.brandId;
 
     const userData = {
+      brandId: brandId,
       accessToken: access_token,
       accessSecret: "",
       platform: platform,

@@ -14,6 +14,7 @@ const getGoogleBusinessAuthUrl = async (req, res) => {
     const accessToken = req.headers.accesstoken;
     const platform = req.headers.platform;
     const id = req.headers.loginid;
+    const brandId = req.query.brandId;
 
     const response = await axios.get(
       "https://mybusinessaccountmanagement.googleapis.com/v1/accounts/",
@@ -49,6 +50,7 @@ const getGoogleBusinessAuthUrl = async (req, res) => {
 
 
     const userData = {
+      brandId: brandId,
       userId: id,
       credentials: encryptedCreds,
       platform: platform,

@@ -9,6 +9,7 @@ const facebookPages = async (req, res) => {
   try {
     const data = req.body;
     const userId = req.user.id;
+    const brandId = req.query.brandId;
     const { accessToken, userID } = data;
 
     let response = [];
@@ -20,6 +21,7 @@ const facebookPages = async (req, res) => {
     if (pageData.success) {
       for (let page of pageData.data) {
         await facebookService.setConnection(
+          brandId,
           page,
           userId,
           FacebookPagePlatform,
@@ -42,6 +44,7 @@ const facebookPages = async (req, res) => {
           };
 
           await facebookService.setConnection(
+            brandId,
             data,
             userId,
             InstagramPlatform,

@@ -14,12 +14,13 @@ const linkedinToken = async (req, res) => {
   try {
     const code = req.body?.code;
     const userId = req.user?.id;
+    const brandId = req.query.brandId;
     const token = await service.getAccessToken(code);
     if (token.success) {
       const profile = await service.getProfile(token.data.access_token);
       if (profile.success) {
         const data = { ...token.data, ...profile.data };
-        await service.setMediaToken(data, userId, LinkedInPlatform, 0);
+        await service.setMediaToken(data, userId, brandId, LinkedInPlatform, 0);
         return res.status(200).json(profile.data);
       } else {
         res.status(400).json(profile.data);
@@ -36,13 +37,14 @@ const linkedInPages = async (req, res) => {
   try {
     const code = req.body?.code;
     const userId = req.user?.id;
+    const brandId = req.query.brandId;
 
     const token = await service.getAccessToken(code);
     if (token.success) {
       const accessToken = token.data.access_token;
 
       const [tokenResponse, pageData] = await Promise.all([
-        await service.setMediaToken(token.data, userId, LinkedInPagePlatform),
+        await service.setMediaToken(token.data, userId, brandId, LinkedInPagePlatform),
         await service.getLinkedInPageIds(accessToken),
       ]);
 
@@ -66,6 +68,7 @@ const linkedInConnect = async (req, res) => {
   try {
     const data = req?.body;
     const userId = req.user?.id;
+    const brandId = req.query.brandId;
     const platform =
       req.query.type === "page" ? LinkedInPagePlatform : LinkedInPlatform;
 
@@ -76,6 +79,7 @@ const linkedInConnect = async (req, res) => {
     const response = await service.setMediaToken(
       { ...data, ...creds },
       userId,
+      brandId,
       platform
     );
     if (response.status) {

@@ -14,11 +14,12 @@ const {
 const { buildAPIURL, isReelUploadSuccessful } = require("../utils/instagram");
 
 class FacebookService {
-  async setConnection(data, userId, platform, isConnected = 1, screenName) {
+  async setConnection(brandId, data, userId, platform, isConnected = 1, screenName) {
     try {
       const encryptedCreds = encryptToken(data);
       const storeData = {
         userId: userId,
+        brandId: brandId,
         credentials: encryptedCreds,
         screenName: screenName,
         platform: platform,
