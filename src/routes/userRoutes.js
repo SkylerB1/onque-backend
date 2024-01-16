@@ -10,6 +10,7 @@ router.post('/login', validator(userSchema.login, ValidationSource.BODY), UserCo
 router.post('/send-email', UserController.sendEmail)
 router.patch('/forgot-password', UserController.forgotPassword)
 router.get("/connections", verifyToken, UserController.userConnections)
+router.get("/brand", verifyToken, UserController.userBrand)
 router.get('/getPostData', verifyToken, UserController.getPostData)
 router.post("/scheduler/posts",verifyToken,UserController.schedulePosts);
 router.patch('/deletePost', UserController.deletePostData)
