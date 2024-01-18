@@ -269,7 +269,7 @@ method.logoutSocialMedia = async (req, res) => {
     const loginId = req.params.id;
     const data = await userInterface.logout(loginId)
     res.status(200).json({
-      message: "Logout successfully",
+      message: "Disconnected successfully",
     });
   } catch (error) {
     res.status(400).json({

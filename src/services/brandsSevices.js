@@ -90,11 +90,25 @@ class BrandServices {
       };
 
       const result = await BrandsModel.update(brandObj, { where: { id } });
+
       return { success: true, body: result };
     } catch (error) {
       return { success: false, error: error };
     }
   };
+
+  /**
+   * 
+   * @param {Integer} id 
+   * @param {Integer} user_id 
+   */
+  async updateActiveBrand(id, user_id) {
+    try {
+
+    } catch (error) {
+
+    }
+  }
 
   /**
    *
