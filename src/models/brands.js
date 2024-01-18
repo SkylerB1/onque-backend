@@ -19,6 +19,11 @@ const Brands = db.define("brands", {
   brand_file: {
     type: DataTypes.STRING,
     allowNull: true,
+  },
+  is_active: {
+    type: DataTypes.ENUM,
+    values: ["0", "1"],
+    defaultValue: "0",    
   }
 }, {
   tableName: "brands",

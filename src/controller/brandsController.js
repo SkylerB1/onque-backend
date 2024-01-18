@@ -45,9 +45,6 @@ methods.getUserSpecificBrands = async (req, res) => {
   try {
     const user_id = req?.user?.id;
     const result = await brandServicesInterface.getUserSpecificBrands(req?.query, user_id);
-    // const attributes = ["id", "userId", "platform", "screenName", "brandId"];
-    // const data = await brandServicesInterface.getConnectedMedia(req?.query, user_id, attributes);
-    // console.log(result)
 
     if (result.success) {
       const response = result.body;
@@ -104,7 +101,8 @@ methods.getSpecificBrandById = async (req, res) => {
 methods.updateBrand = async (req, res) => {
   try {
     const id = req?.params?.id;
-    const result = await brandServicesInterface.updateBrand(req?.body, id);
+    const data = req?.body?.data;
+    const result = await brandServicesInterface.updateBrand(data, id);
 
     if (result.success) {
       const response = {
@@ -121,6 +119,16 @@ methods.updateBrand = async (req, res) => {
     return ErrorResponse(res, error);
   }
 };
+
+methods.activeBrand = async (req, res) => {
+  try {
+    const id = req?.params?.id;
+    const user_id = req?.user?.id;
+    result = await brandServicesInterface.updateActiveBrand(id, user_id)
+  } catch (error) {
+    console.log(error)
+  }
+}
 
 /**
  *

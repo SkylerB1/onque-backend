@@ -187,7 +187,6 @@ const getAllPendingPosts = async () => {
 };
 
 const saveConnection = async (encryptedCreds, userId, brandId, username, platform, isConnected = 1) => {
-  console.log({ encryptedCreds, userId, username, platform, isConnected })
   try {
     const data = {
       userId: userId,
