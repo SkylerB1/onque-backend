@@ -85,10 +85,10 @@ class BrandServices {
   async updateBrand(data, id) {
     try {
       const brandObj = {
-        brand_name: data.brand_name,
+        brand_name: data.name,
         brand_file: data.brand_file
       };
-
+      
       const result = await BrandsModel.update(brandObj, { where: { id } });
 
       return { success: true, body: result };

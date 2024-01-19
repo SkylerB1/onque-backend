@@ -7,7 +7,7 @@ const { TwitterApi } = require("twitter-api-v2");
 const path = require("path");
 const { areMimeTypesEqual } = require("../CommonFunctions");
 
-const TwitterSharePost = async (data, platform, userId) => {
+const TwitterSharePost = async (data, platform, userId, brandId) => {
   const {
     TWITTER_CONSUMER_KEY,
     TWITTER_CONSUMER_SECRET,
@@ -16,7 +16,7 @@ const TwitterSharePost = async (data, platform, userId) => {
 
   try {
     const { caption, files } = data;
-    const creds = await userService.getTokenByIdPlatform(userId, platform);
+    const creds = await userService.getTokenByIdPlatform(userId, brandId, platform);
 
     const { token, tokenSecret } = creds;
 

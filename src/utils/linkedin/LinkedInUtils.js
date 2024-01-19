@@ -6,7 +6,7 @@ const { LinkedInPagePlatform, LinkedInPlatform } = require("../CommonString");
 const linkedInService = new LinkedInServices();
 const userService = new UserService();
 
-const LinkedInSharePost = async (data, platformType, userId) => {
+const LinkedInSharePost = async (data, platformType, userId, brandId) => {
   try {
     const mimetype = data.files[0].mimetype;
     const isVideo = mimetype.includes("video");
@@ -16,7 +16,7 @@ const LinkedInSharePost = async (data, platformType, userId) => {
         ? LinkedInPagePlatform
         : LinkedInPlatform;
 
-    let creds = await userService.getTokenByIdPlatform(userId, platform);
+    let creds = await userService.getTokenByIdPlatform(userId, brandId, platform);
     //   const currentTimestamp = moment();
     //   const tokenExpirationTimestamp = moment().add(creds.expires_in, "seconds");
     //   console.log(moment())

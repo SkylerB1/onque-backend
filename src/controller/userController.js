@@ -211,7 +211,8 @@ method.forgotPassword = async (req, res) => {
 
 method.getPostData = async (req, res) => {
   const userId = req.user?.id;
-  let data = await userInterface.getPostData(userId);
+  const brandId = req?.params?.id;
+  let data = await userInterface.getPostData(userId, brandId);
   if (data) {
     res.status(200).json(data);
   } else {
@@ -311,18 +312,19 @@ method.userBrand = async (req, res) => {
 method.schedulePosts = async (req, res) => {
   const userId = req.user?.id;
   const data = req.body;
+  const brandId = req?.params?.id;
   const { providers, scheduledDate } = data;
   const canPublish = moment(scheduledDate).isSameOrBefore(moment());
 
   if (providers.length > 0) {
     if (canPublish) {
-      var postStatus = await publishPosts(data, userId);
+      var postStatus = await publishPosts(data, userId, brandId);
 
       if (!postStatus.success) {
         return res.status(400).json(postStatus.data);
       }
     }
-    const response = await createPost(userId, data, postStatus?.data);
+    const response = await createPost(userId, brandId, data, postStatus?.data);
     if (response.success) {
       return res.status(200).json(response.data);
     } else {
