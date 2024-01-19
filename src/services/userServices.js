@@ -7,8 +7,14 @@ const { Op } = require("sequelize");
 const { decryptToken } = require("../middleware/encryptToken");
 
 class UserService {
+
+  /**
+   * 
+   * @param {String} email 
+   * @returns 
+   * @comment Check the emaile present in the Db or not
+   */
   async checkEmail(email) {
-    // backend query
     return Users.findOne({
       where: {
         email: email,
@@ -16,12 +22,23 @@ class UserService {
     });
   }
 
+  /**
+   * 
+   * @param {Object} data 
+   * @returns JSON Response and JSON Error
+   * @comment Create the user
+   */
   async createUser(data) {
-    // backend query
     const userData = await Users.create(data);
     return userData;
   }
 
+  /**
+   * 
+   * @param {Object} data 
+   * @returns JSON Response and JSON Error
+   * @comment For the reset Password
+   */
   async updatePassword(data) {
     const objData = {
       password: data.password,
@@ -45,6 +62,14 @@ class UserService {
     }
   }
 
+  /**
+   * 
+   * @param {Integer} userId 
+   * @param {Integer} brandId 
+   * @param {Object} attributes 
+   * @returns JSON Response and JSON Error
+   * @comment For geeting the Connected Social media
+   */
   async getUserConnections(userId, brandId, attributes) {
     return await SocialMediaToken.findAll({
       attributes: attributes,
@@ -56,11 +81,21 @@ class UserService {
     });
   }
 
+  /**
+   * 
+   * @param {Object} data 
+   */
   async updateUserId(data) {
     // backend query
     const userId = data.userId;
   }
 
+  /**
+   * 
+   * @param {Object} data 
+   * @returns JSON Response and JSON Error
+   * @comment for Getting the Social media token
+   */
   async setMediaToken(data) {
     if (data.screenName != "") {
       const where = { screenName: data.screenName };
@@ -73,6 +108,12 @@ class UserService {
     }
   }
 
+  /**
+   * 
+   * @param {Object} data 
+   * @returns JSON Response and JSON Error
+   * @comment For getting the User id
+   */
   async getUserId(data) {
     const accessSecret = data.accessSecret;
     if (accessSecret) {
@@ -106,10 +147,10 @@ class UserService {
     }
   }
 
-  async getPostData(userId) {
+  async getPostData(userId, brandId) {
     const deleted = "0";
     if (deleted) {
-      let where = { deleted: deleted, userId: userId };
+      let where = { deleted: deleted, userId: userId, brandId:brandId };
       return Posts.findAll({ where: where });
     }
   }
@@ -163,10 +204,18 @@ class UserService {
     return await SocialMediaToken.findOne({ where: where });
   }
 
-  async getTokenByIdPlatform(userId, platform) {
+  /**
+   * 
+   * @param {Integer} userId 
+   * @param {Integer} brandId 
+   * @param {*} platform 
+   * @returns 
+   */
+  async getTokenByIdPlatform(userId, brandId, platform) {
     const userPlatform = await SocialMediaToken.findOne({
       where: {
         userId: userId,
+        brandId: brandId,
         platform: platform,
         isConnected: 1,
       },

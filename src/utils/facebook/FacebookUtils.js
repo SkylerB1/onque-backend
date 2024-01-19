@@ -6,15 +6,14 @@ const { REEL } = require("../CommonString");
 const facebookService = new FacebookService();
 const userService = new UserService();
 
-const FacebookSharePost = async (data, platformType, mediaType, userId) => {
+const FacebookSharePost = async (data, platformType, mediaType, userId, brandId) => {
   try {
     const mimetype = data.files[0]?.mimetype ?? null;
     const isVideo = mimetype?.includes("video") ?? false;
     const isPhoto = mimetype?.includes("image") ?? false;
     const platform = platformType;
 
-    const creds = await userService.getTokenByIdPlatform(userId, platform);
-    console.log(creds)
+    const creds = await userService.getTokenByIdPlatform(userId, brandId, platform);
     const pageId = creds.id;
     const accessToken = creds.access_token;
     //   const currentTimestamp = moment();

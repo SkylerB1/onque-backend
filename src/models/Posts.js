@@ -13,6 +13,10 @@ const Posts = db.define("posts", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  brandId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
   text: {
     type: DataTypes.STRING,
     allowNull: true,

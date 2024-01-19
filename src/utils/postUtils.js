@@ -39,11 +39,12 @@ const schedulePosts = async () => {
   }
 };
 
-const createPost = async (userId, data, status) => {
+const createPost = async (userId, brandId, data, status) => {
   const { caption, files, providers, scheduledDate } = data;
 
   const postData = {
     userId: userId,
+    brandId: brandId,
     text: caption,
     files: files?.map((item) => {
       return {
@@ -72,7 +73,7 @@ const createPost = async (userId, data, status) => {
   }
 };
 
-const publishPosts = async (data, userId) => {
+const publishPosts = async (data, userId, brandId) => {
   const { providers, caption, files } = data;
   const result = [];
 
@@ -82,7 +83,7 @@ const publishPosts = async (data, userId) => {
       const platform = item.platform;
       const mediaType = item.mediaType;
       if (platform.includes("LinkedIn")) {
-        const response = await LinkedInSharePost(shareData, platform, userId);
+        const response = await LinkedInSharePost(shareData, platform, userId, brandId);
         result.push({
           status: response.success ? "Published" : "Error",
           message: response.data,
@@ -93,7 +94,8 @@ const publishPosts = async (data, userId) => {
           shareData,
           platform,
           mediaType,
-          userId
+          userId,
+          brandId
         );
         result.push({
           status: response.success ? "Published" : "Error",
@@ -105,7 +107,8 @@ const publishPosts = async (data, userId) => {
           shareData,
           platform,
           mediaType,
-          userId
+          userId,
+          brandId
         );
         result.push({
           status: response.success ? "Published" : "Error",
@@ -116,7 +119,8 @@ const publishPosts = async (data, userId) => {
         const response = await TwitterSharePost(
           shareData,
           platform,
-          userId
+          userId,
+          brandId
         );
         result.push({
           status: response.success ? "Published" : "Error",
