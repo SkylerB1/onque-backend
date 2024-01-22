@@ -26,6 +26,8 @@ method.register = async (req, res) => {
     if (!verifiedEmail) {
       const hashedPassword = await bcrypt.hash(req.body.password, 10);
       const data = await userInterface.createUser({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
         email: req.body.email,
         password: hashedPassword,
       });
@@ -54,13 +56,14 @@ method.logInUser = async (req, res) => {
       );
       if (verifiedPassword) {
         const authToken = jwt.sign(
-          { id: verifiedEmail.id, email: verifiedEmail.email },
+          { id: verifiedEmail.id, email: verifiedEmail.email, firstName: verifiedEmail.firstName, lastName: verifiedEmail.lastName },
           process.env.SECRETKEY
         );
 
         res.status(200).json({
           id: verifiedEmail.id,
-          userId: verifiedEmail.userId,
+          firstName: verifiedEmail.firstName,
+          lastName: verifiedEmail.lastName,
           email: verifiedEmail.email,
           access_token: authToken,
           message: "user Login successfully",
@@ -282,8 +285,7 @@ method.logoutSocialMedia = async (req, res) => {
 
 method.userConnections = async (req, res) => {
   const userId = req.user?.id;
-  const brandId = req.query?.brandId
-  console.log(brandId)
+  const brandId = req.query?.brandId;
   const attributes = ["id", "userId", "platform", "screenName", "brandId"];
   try {
     const connections = await userInterface.getUserConnections(
