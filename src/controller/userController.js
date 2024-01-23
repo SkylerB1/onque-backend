@@ -88,7 +88,7 @@ method.logInUser = async (req, res) => {
  */
 method.sendEmail = async (req, res) => {
   try {
-    const email = req.body.email;
+    const email = req?.body?.data?.email;
     const verifiedEmail = await userInterface.checkEmail(email);
     if (verifiedEmail) {
       // Insert your API key here
