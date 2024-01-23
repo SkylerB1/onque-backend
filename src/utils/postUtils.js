@@ -1,15 +1,13 @@
 const Posts = require("../models/Posts");
 const moment = require("moment");
-const UserController = require("../controller/userController");
 const { LinkedInSharePost } = require("./linkedin/LinkedInUtils");
 const { Op } = require("sequelize");
-const {
-  googleBusinessPost,
-} = require("../controller/googleBusinessController");
 const { FacebookSharePost } = require("./facebook/FacebookUtils");
 const { InstagramSharePost } = require("./instagram/InstagramUtils");
 const SocialMediaToken = require("../models/SocialMediaToken");
 const { TwitterSharePost } = require("./twitter/TwitterUtils");
+const { YoutubeShareVideo } = require("./youtube/YoutubeUtils");
+const { GBusinessSharePost } = require("./google-business/GoogleBusinessUtil");
 
 const schedulePosts = async () => {
   const posts = await getAllPendingPosts();
@@ -59,6 +57,7 @@ const createPost = async (userId, brandId, data, status) => {
         return {
           platform: item.platform,
           mediaType: item.mediaType,
+          additionalPresets: item.additionalPresets,
           status: "Pending",
         };
       }),
@@ -79,7 +78,11 @@ const publishPosts = async (data, userId, brandId) => {
 
   for (item of providers) {
     try {
-      const shareData = { caption: caption, files: files };
+      const shareData = {
+        caption: caption,
+        files: files,
+        additionalPresets: item.additionalPresets,
+      };
       const platform = item.platform;
       const mediaType = item.mediaType;
       if (platform.includes("LinkedIn")) {
@@ -116,7 +119,26 @@ const publishPosts = async (data, userId, brandId) => {
           platform: platform,
         });
       } else if (platform.includes("Twitter")) {
-        const response = await TwitterSharePost(
+        const response = await TwitterSharePost(shareData, platform, userId,brandId);
+        result.push({
+          status: response.success ? "Published" : "Error",
+          message: response.data,
+          platform: platform,
+        });
+      } else if (platform.includes("YouTube")) {
+        const response = await YoutubeShareVideo(
+          shareData,
+          platform,
+          userId,
+          brandId
+        );
+        result.push({
+          status: response.success ? "Published" : "Error",
+          message: response.data,
+          platform: platform,
+        });
+      } else if (platform.includes("Google_Business")) {
+        const response = await GBusinessSharePost(
           shareData,
           platform,
           userId,
@@ -190,7 +212,14 @@ const getAllPendingPosts = async () => {
   }
 };
 
-const saveConnection = async (encryptedCreds, userId, brandId, username, platform, isConnected = 1) => {
+const saveConnection = async (
+  encryptedCreds,
+  userId,
+  brandId,
+  username,
+  platform,
+  isConnected = 1,
+) => {
   try {
     const data = {
       userId: userId,

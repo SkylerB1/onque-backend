@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const cors = require("cors");
@@ -9,7 +10,6 @@ const cron = require("node-cron");
 const { schedulePosts } = require("./src/utils/postUtils");
 const passport = require("passport");
 
-require("dotenv").config();
 require("./src/config/db.config");
 require("./src/models/index");
 
@@ -36,7 +36,13 @@ app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use("/api", router);
+passport.serializeUser(function (user, done) {
+  done(null, user);
+});
 
+passport.deserializeUser(function (user, done) {
+  done(null, user);
+});
 
 
 

@@ -41,7 +41,7 @@ const twitterStrategy = (req, res, next) => {
           userId,
           brandId,
           profile.username,
-          TwitterPlatform
+          TwitterPlatform,
         );
 
         if (response.success) {
