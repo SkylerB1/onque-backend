@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 var request = require("request");
 const mailer = require("@sendgrid/mail");
 const { createPost, publishPosts } = require("../utils/postUtils");
-const BrandServices = require('../services/brandsSevices');
+const BrandServices = require("../services/brandsSevices");
 const brandServicesInterface = new BrandServices();
 
 const method = {};
@@ -88,7 +88,7 @@ method.logInUser = async (req, res) => {
  */
 method.sendEmail = async (req, res) => {
   try {
-    const email = req.body.email;
+    const email = req?.body?.data?.email;
     const verifiedEmail = await userInterface.checkEmail(email);
     if (verifiedEmail) {
       // Insert your API key here
@@ -173,7 +173,7 @@ method.sendEmail = async (req, res) => {
     } else {
       res.status(400).json({ message: "Please enter a valid email address!" });
     }
-  } catch (error) { }
+  } catch (error) {}
 };
 
 /**
@@ -209,7 +209,7 @@ method.forgotPassword = async (req, res) => {
         });
       }
     }
-  } catch (error) { }
+  } catch (error) {}
 };
 
 method.getPostData = async (req, res) => {
@@ -271,7 +271,7 @@ method.deletePostData = async (req, res) => {
 method.logoutSocialMedia = async (req, res) => {
   try {
     const loginId = req.params.id;
-    const data = await userInterface.logout(loginId)
+    const data = await userInterface.logout(loginId);
     res.status(200).json({
       message: "Disconnected successfully",
     });
@@ -281,7 +281,7 @@ method.logoutSocialMedia = async (req, res) => {
       error: err.message,
     });
   }
-}
+};
 
 method.userConnections = async (req, res) => {
   const userId = req.user?.id;
@@ -308,8 +308,7 @@ method.userBrand = async (req, res) => {
   } catch (error) {
     return res.status(400).json(err);
   }
-}
-
+};
 
 method.schedulePosts = async (req, res) => {
   const userId = req.user?.id;

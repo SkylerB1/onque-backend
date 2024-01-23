@@ -7,11 +7,10 @@ const { Op } = require("sequelize");
 const { decryptToken } = require("../middleware/encryptToken");
 
 class UserService {
-
   /**
-   * 
-   * @param {String} email 
-   * @returns 
+   *
+   * @param {String} email
+   * @returns
    * @comment Check the emaile present in the Db or not
    */
   async checkEmail(email) {
@@ -23,8 +22,8 @@ class UserService {
   }
 
   /**
-   * 
-   * @param {Object} data 
+   *
+   * @param {Object} data
    * @returns JSON Response and JSON Error
    * @comment Create the user
    */
@@ -34,8 +33,8 @@ class UserService {
   }
 
   /**
-   * 
-   * @param {Object} data 
+   *
+   * @param {Object} data
    * @returns JSON Response and JSON Error
    * @comment For the reset Password
    */
@@ -63,10 +62,10 @@ class UserService {
   }
 
   /**
-   * 
-   * @param {Integer} userId 
-   * @param {Integer} brandId 
-   * @param {Object} attributes 
+   *
+   * @param {Integer} userId
+   * @param {Integer} brandId
+   * @param {Object} attributes
    * @returns JSON Response and JSON Error
    * @comment For geeting the Connected Social media
    */
@@ -82,8 +81,8 @@ class UserService {
   }
 
   /**
-   * 
-   * @param {Object} data 
+   *
+   * @param {Object} data
    */
   async updateUserId(data) {
     // backend query
@@ -91,8 +90,8 @@ class UserService {
   }
 
   /**
-   * 
-   * @param {Object} data 
+   *
+   * @param {Object} data
    * @returns JSON Response and JSON Error
    * @comment for Getting the Social media token
    */
@@ -109,8 +108,8 @@ class UserService {
   }
 
   /**
-   * 
-   * @param {Object} data 
+   *
+   * @param {Object} data
    * @returns JSON Response and JSON Error
    * @comment For getting the User id
    */
@@ -150,7 +149,7 @@ class UserService {
   async getPostData(userId, brandId) {
     const deleted = "0";
     if (deleted) {
-      let where = { deleted: deleted, userId: userId, brandId:brandId };
+      let where = { deleted: deleted, userId: userId, brandId: brandId };
       return Posts.findAll({ where: where });
     }
   }
@@ -178,7 +177,7 @@ class UserService {
 
   async logout(id) {
     let where = { id };
-    return await SocialMediaToken.destroy({ where: where })
+    return await SocialMediaToken.destroy({ where: where });
   }
 
   async scheduleData() {
@@ -205,22 +204,26 @@ class UserService {
   }
 
   /**
-   * 
-   * @param {Integer} userId 
-   * @param {Integer} brandId 
-   * @param {*} platform 
-   * @returns 
+   *
+   * @param {Integer} userId
+   * @param {Integer} brandId
+   * @param {*} platform
+   * @returns
    */
-  async getTokenByIdPlatform(userId, brandId, platform) {
+  async getTokenByIdPlatform(userId, platform, isConnected = 1, brandId) {
     const userPlatform = await SocialMediaToken.findOne({
       where: {
         userId: userId,
         brandId: brandId,
         platform: platform,
-        isConnected: 1,
+        isConnected: isConnected,
       },
     });
-    return decryptToken(userPlatform.credentials);
+    if (userPlatform?.credentials) {
+      return decryptToken(userPlatform.credentials);
+    } else {
+      return null;
+    }
   }
 }
 

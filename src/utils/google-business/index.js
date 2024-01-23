@@ -1,12 +1,16 @@
 const passport = require("passport");
-const { Strategy } = require("passport-youtube-v3");
+const { Strategy } = require("passport-google-oauth20");
 const { encryptToken } = require("../../middleware/encryptToken");
 const { saveConnection } = require("../postUtils");
-const { YouTubePlatform } = require("../CommonString");
+const { GoogleBusinessPlatform } = require("../CommonString");
 
-const youtubeStrategy = async (req, res, next) => {
-  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, YOUTUBE_CALLBACK_URL } =
-    process.env;
+const googleBusinessStrategy = async (req, res, next) => {
+  const {
+    GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+    GOOGLE_BUSINESS_CALLBACK_URL,
+  } = process.env;
+
   const userId = req.query.userId;
   const brandId = req.query.brandId;
 
@@ -15,28 +19,30 @@ const youtubeStrategy = async (req, res, next) => {
       {
         clientID: GOOGLE_CLIENT_ID,
         clientSecret: GOOGLE_CLIENT_SECRET,
-        callbackURL: YOUTUBE_CALLBACK_URL,
+        callbackURL: GOOGLE_BUSINESS_CALLBACK_URL,
         scope: [
-          "https://www.googleapis.com/auth/youtube.readonly",
-          "https://www.googleapis.com/auth/youtube",
-          "https://www.googleapis.com/auth/youtube.upload",
+          "https://www.googleapis.com/auth/business.manage",
+          "https://www.googleapis.com/auth/userinfo.profile",
+          "https://www.googleapis.com/auth/userinfo.email",
         ],
-        accessType: "offline",
       },
       async function (accessToken, refreshToken, profile, cb) {
+        const profileJson = profile._json;
         const creds = {
           accessToken,
           refreshToken,
-          ...profile._json,
+          ...profileJson,
         };
         const encryptedCreds = encryptToken(creds);
         const response = await saveConnection(
           encryptedCreds,
           userId,
           brandId,
-          profile.displayName,
-          YouTubePlatform
+          profileJson.name,
+          GoogleBusinessPlatform,
+          0
         );
+        console.log(response)
 
         if (response.success) {
           return cb(null, profile);
@@ -46,18 +52,9 @@ const youtubeStrategy = async (req, res, next) => {
       }
     )
   );
-
-  passport.serializeUser((user, cb) => {
-    cb(null, user);
-  });
-
-  passport.deserializeUser((user, cb) => {
-    cb(null, user);
-  });
-
   next();
 };
 
 module.exports = {
-  youtubeStrategy,
+  googleBusinessStrategy,
 };
