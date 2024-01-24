@@ -13,12 +13,13 @@ const schedulePosts = async () => {
   const posts = await getAllPendingPosts();
   for (let post of posts) {
     try {
+      const { userId, brandId } = post;
       const postData = {
         providers: post.platform,
         caption: post.text,
         files: post.files,
       };
-      const response = await publishPosts(postData, post.userId);
+      const response = await publishPosts(postData, userId, brandId);
 
       await Posts.update(
         {
@@ -86,7 +87,12 @@ const publishPosts = async (data, userId, brandId) => {
       const platform = item.platform;
       const mediaType = item.mediaType;
       if (platform.includes("LinkedIn")) {
-        const response = await LinkedInSharePost(shareData, platform, userId, brandId);
+        const response = await LinkedInSharePost(
+          shareData,
+          platform,
+          userId,
+          brandId
+        );
         result.push({
           status: response.success ? "Published" : "Error",
           message: response.data,
@@ -119,7 +125,12 @@ const publishPosts = async (data, userId, brandId) => {
           platform: platform,
         });
       } else if (platform.includes("Twitter")) {
-        const response = await TwitterSharePost(shareData, platform, userId,brandId);
+        const response = await TwitterSharePost(
+          shareData,
+          platform,
+          userId,
+          brandId
+        );
         result.push({
           status: response.success ? "Published" : "Error",
           message: response.data,
@@ -140,7 +151,7 @@ const publishPosts = async (data, userId, brandId) => {
       } else if (platform.includes("Google_Business")) {
         const response = await GBusinessSharePost(
           shareData,
-          platform,
+          mediaType,
           userId,
           brandId
         );
@@ -218,7 +229,7 @@ const saveConnection = async (
   brandId,
   username,
   platform,
-  isConnected = 1,
+  isConnected = 1
 ) => {
   try {
     const data = {
