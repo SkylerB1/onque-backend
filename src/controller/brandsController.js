@@ -1,4 +1,10 @@
-const { SuccessResponse, SuccessGetResponse, ErrorResponse, UpdateResponse, DeletedResponse } = require("../utils/apiResponse");
+const {
+  SuccessResponse,
+  SuccessGetResponse,
+  ErrorResponse,
+  UpdateResponse,
+  DeletedResponse,
+} = require("../utils/apiResponse");
 const BrandServices = require("../services/brandsSevices");
 const brandServicesInterface = new BrandServices();
 const methods = {};
@@ -14,18 +20,21 @@ const methods = {};
 methods.createBrand = async (req, res) => {
   try {
     const user_id = req?.user?.id;
-    const brand_name = req?.body?.data?.brand_name
-    const result = await brandServicesInterface.createBrand(brand_name, user_id);
+    const brand_name = req?.body?.data?.brand_name;
+    const result = await brandServicesInterface.createBrand(
+      brand_name,
+      user_id
+    );
 
     if (result.success) {
       const response = {
-        brand: result.body
+        brand: result.body,
       };
       return SuccessResponse(res, response);
     } else {
       res.json({
         success: result.success,
-        error: result.error
+        error: result.error,
       });
     }
   } catch (error) {
@@ -44,16 +53,23 @@ methods.createBrand = async (req, res) => {
 methods.getUserSpecificBrands = async (req, res) => {
   try {
     const user_id = req?.user?.id;
-    const result = await brandServicesInterface.getUserSpecificBrands(req?.query, user_id);
 
-    if (result.success) {
-      const response = result.body;
-      return SuccessGetResponse(res, response);
-    } else {
-      res.json({
-        success: result.success,
-        error: result.error
-      });
+    try {
+      const result = await brandServicesInterface.getUserSpecificBrands(
+        req?.query,
+        user_id
+      );
+      if (result.success) {
+        const response = result.body;
+        return SuccessGetResponse(res, response);
+      } else {
+        res.json({
+          success: result.success,
+          error: result.error,
+        });
+      }
+    } catch (err) {
+      console.log(err);
     }
   } catch (error) {
     return ErrorResponse(res, error);
@@ -72,17 +88,20 @@ methods.getSpecificBrandById = async (req, res) => {
   try {
     const user_id = req?.user?.id;
     const brandId = req?.params?.id;
-    const result = await brandServicesInterface.getSpecificBrandById(brandId, user_id);
+    const result = await brandServicesInterface.getSpecificBrandById(
+      brandId,
+      user_id
+    );
 
     if (result.success) {
       const response = {
-        data: result.body
+        data: result.body,
       };
       return SuccessGetResponse(res, response);
     } else {
       res.json({
         success: result.success,
-        error: result.error
+        error: result.error,
       });
     }
   } catch (error) {
@@ -106,13 +125,13 @@ methods.updateBrand = async (req, res) => {
 
     if (result.success) {
       const response = {
-        data: result.body
+        data: result.body,
       };
       return UpdateResponse(res, response);
     } else {
       res.json({
         success: result.success,
-        error: result.error
+        error: result.error,
       });
     }
   } catch (error) {
@@ -124,11 +143,11 @@ methods.activeBrand = async (req, res) => {
   try {
     const id = req?.params?.id;
     const user_id = req?.user?.id;
-    result = await brandServicesInterface.updateActiveBrand(id, user_id)
+    result = await brandServicesInterface.updateActiveBrand(id, user_id);
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};
 
 /**
  *
@@ -145,13 +164,13 @@ methods.deleteBrand = async (req, res) => {
 
     if (result.success) {
       const response = {
-        data: result.body
+        data: result.body,
       };
       return DeletedResponse(res, response);
     } else {
       res.json({
         success: result.success,
-        error: result.error
+        error: result.error,
       });
     }
   } catch (error) {

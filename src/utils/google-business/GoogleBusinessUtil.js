@@ -26,50 +26,70 @@ const googleBusinessManage = google.mybusinessaccountmanagement({
   auth: oAuth2Client,
 });
 
-const googleMyBusinessAction = google.mybusinessplaceactions({
-  version: "v1",
-  auth: oAuth2Client,
-});
-
-const GBusinessSharePost = async (data, platform, userId) => {
-  const { files, caption, additionalPresets } = data;
-
+const GBusinessSharePost = async (data, mediaType, userId, brandId) => {
   try {
-    const creds = await userService.getTokenByIdPlatform(userId, platform);
-    console.log(creds);
+    const { caption, files, additionalPresets } = data;
+    if (files.length > 1) {
+      return { status: 400, data: "Max 1 image allowed", success: false };
+    }
+    const file = files[0];
+    if (file?.mimetype?.includes("video")) {
+      return {
+        status: 400,
+        data: "Video not allowed",
+        success: false,
+      };
+    }
+    const creds = await userService.getTokenByIdPlatform(
+      userId,
+      GoogleBusinessPlatform,
+      1,
+      brandId
+    );
     const { accessToken, refreshToken, id, account } = creds;
-    console.log({ accessToken, refreshToken, id, account });
 
     oAuth2Client.setCredentials({
       access_token: accessToken,
       refresh_token: refreshToken,
     });
 
-    await isTokenExpired(creds, userId);
-
-    const file = files[0];
-
-    const data = {
+    await isTokenExpired(creds, userId, brandId);
+    const media = [];
+    let postData = {
       languageCode: "en-US",
       summary: caption,
-      // callToAction: {
-      //   actionType: "ORDER",
-      //   url: "http://google.com/order_turkeys_here",
-      // },
-      media: [
-        {
-          mediaFormat: "PHOTO",
-          sourceUrl:
-            "https://api.jjmedia.appwrk.com/assets/files-1705469897444.png",
-        },
-      ],
-      topicType: "STANDARD",
     };
+
+    switch (mediaType) {
+      case "OFFER":
+        postData = offerPostData(postData, additionalPresets);
+        postData.topicType = "OFFER";
+        break;
+      case "POST":
+        postData = callToActionPost(postData, additionalPresets);
+        postData.topicType = "STANDARD";
+        break;
+      case "EVENT":
+        postData = eventPostData(postData, additionalPresets);
+        postData.topicType = "EVENT";
+        break;
+      default:
+        return { status: 400, data: "Invalid mediaType", success: false };
+    }
+
+    if (file) {
+      media.push({
+        mediaFormat: "PHOTO",
+        sourceUrl:
+          "https://api.jjmedia.appwrk.com/assets/files-1706085350825.png",
+      });
+      postData.media = media;
+    }
 
     try {
       const res = await axios.post(
         `https://mybusiness.googleapis.com/v4/${account}/${id}/localPosts`,
-        data,
+        postData,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -77,9 +97,7 @@ const GBusinessSharePost = async (data, platform, userId) => {
         }
       );
 
-      console.log(res);
-
-      return { success: true, data: res.data.id };
+      return { success: true, data: res.data.name };
     } catch (err) {
       console.log(err);
       console.log(JSON.stringify(err.response.data));
@@ -90,15 +108,84 @@ const GBusinessSharePost = async (data, platform, userId) => {
   }
 };
 
-const isTokenExpired = async (creds, userId) => {
+const offerPostData = (obj, data) => {
+  const { couponCode, offerLink, termsCondition } = data;
+  obj.offer = {
+    couponCode: couponCode,
+    redeemOnlineUrl: offerLink,
+    termsConditions: termsCondition,
+  };
+  obj = eventPostData(obj, data);
+  return obj;
+};
+
+const callToActionPost = (obj, data) => {
+  const { button, buttonLink } = data;
+  obj.callToAction = {
+    actionType: button != "" ? button : "",
+    url: buttonLink,
+  };
+
+  return obj;
+};
+
+const eventPostData = (obj, data) => {
+  const { title, startDate, endDate, startTime, endTime, button, buttonLink } =
+    data;
+
+  obj.event = {
+    title: title,
+    schedule: {},
+  };
+  if (startDate && startDate !== "") {
+    const splitStartDate = startDate !== "" ? startDate.split("-") : null;
+    obj.event.schedule.startDate = {
+      year: splitStartDate[0],
+      month: splitStartDate[1],
+      day: splitStartDate[2],
+    };
+  }
+  if (endDate && endDate !== "") {
+    const splitEndDate = endDate.split("-");
+    obj.event.schedule.endDate = {
+      year: splitEndDate[0],
+      month: splitEndDate[1],
+      day: splitEndDate[2],
+    };
+  }
+  if (startTime && startTime != "") {
+    const splitStartTime = startTime.split(":");
+    obj.event.schedule.startTime = {
+      hours: splitStartTime[0],
+      minutes: splitStartTime[1],
+      seconds: 0,
+      nanos: 0,
+    };
+  }
+
+  if (endTime && endTime != "") {
+    const splitEndTime = endTime.split(":");
+    obj.event.schedule.endTime = {
+      hours: splitEndTime[0],
+      minutes: splitEndTime[1],
+      seconds: 0,
+      nanos: 0,
+    };
+  }
+
+  if (button && button !== "" && buttonLink && buttonLink !== "") {
+    obj = callToActionPost(obj, data);
+  }
+  return obj;
+};
+
+const isTokenExpired = async (creds, userId, brandId) => {
   let { accessToken, refreshToken, ...rest } = creds;
   try {
     await oAuth2Client.getTokenInfo(accessToken);
   } catch (err) {
     if (err.response.data.error === "invalid_token") {
-      const { credentials, res } = await oAuth2Client.refreshAccessToken();
-      console.log(res);
-      console.log(credentials);
+      const { credentials } = await oAuth2Client.refreshAccessToken();
 
       const { access_token, refresh_token } = credentials;
       accessToken = access_token;
@@ -108,7 +195,13 @@ const isTokenExpired = async (creds, userId) => {
         refreshToken,
         ...rest,
       });
-      await updateUserCreds(encryptedCreds, userId, GoogleBusinessPlatform);
+      await updateUserCreds(
+        encryptedCreds,
+        userId,
+        GoogleBusinessPlatform,
+        1,
+        brandId
+      );
 
       oAuth2Client.setCredentials({
         access_token: access_token,
@@ -121,11 +214,9 @@ const isTokenExpired = async (creds, userId) => {
 const GetBusinessAccounts = async () => {
   try {
     const accounts = await googleBusinessManage.accounts.list();
-    console.log(JSON.stringify(accounts.data));
     const account = accounts.data.accounts[0].name;
     return { success: true, data: account };
   } catch (err) {
-    console.log(JSON.stringify(err.response.data));
     return { success: false, data: err.response.data };
   }
 };
@@ -138,7 +229,6 @@ const GetBusinessLocations = async (userId, brandId) => {
       0,
       brandId
     );
-    console.log({ creds });
     const { accessToken, refreshToken } = creds;
     oAuth2Client.setCredentials({
       access_token: accessToken,
@@ -146,13 +236,11 @@ const GetBusinessLocations = async (userId, brandId) => {
     });
     await isTokenExpired(creds, userId);
     const account = await GetBusinessAccounts();
-    console.log({ account });
     if (account.success) {
       const res = await googleBusinessInfo.accounts.locations.list({
         parent: account.data,
         readMask: "name,title,storefrontAddress",
       });
-      console.log(res.data);
 
       return {
         success: true,
