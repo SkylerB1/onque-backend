@@ -14,17 +14,17 @@ class BrandServices {
     try {
       const brandObj = {
         user_id: user_id,
-        brand_name: brand_name !== "" ? brand_name : "Empty Client"
+        brand_name: brand_name !== "" ? brand_name : "Empty Client",
       };
       const result = await BrandsModel.create(brandObj);
       return { success: true, body: result };
     } catch (error) {
       return { success: false, error: error };
     }
-  };
+  }
 
   /**
-   * 
+   *
    * @param { Object } params
    * @param { Integer } user_id
    * @returns {Promise<{success: boolean, error: *}|{success: boolean, body: *}>}
@@ -35,7 +35,13 @@ class BrandServices {
       let query = {
         where: { user_id },
         attributes: { exclude: ["createdAt", "updatedAt"] },
-        include: [{ model: socialTokens, as: "socialTokens", attributes: ["id", "userId", "platform", "screenName", "brandId"] }]
+        include: [
+          {
+            model: socialTokens,
+            as: "socialTokens",
+            attributes: ["id", "userId", "platform", "screenName", "brandId"],
+          },
+        ],
       };
 
       const result = await BrandsModel.findAndCountAll(query);
@@ -43,7 +49,7 @@ class BrandServices {
     } catch (error) {
       return { success: false, error: error };
     }
-  };
+  }
 
   async getConnectedMedia(params, user_id, attributes) {
     return await SocialMediaToken.findAll({
@@ -56,7 +62,7 @@ class BrandServices {
   }
 
   /**
-   * 
+   *
    * @param { Integer } id
    * @param { Integer } user_id
    * @returns {Promise<{success: boolean, error: *}|{success: boolean, body: *}>}
@@ -65,7 +71,7 @@ class BrandServices {
   async getSpecificBrandById(id, user_id) {
     try {
       let query = {
-        where: { id, user_id }
+        where: { id, user_id },
       };
 
       const result = await BrandsModel.findOne(query);
@@ -73,10 +79,10 @@ class BrandServices {
     } catch (error) {
       return { success: false, error: error };
     }
-  };
+  }
 
   /**
-   * 
+   *
    * @param { Object } data
    * @param { Integer } id
    * @returns {Promise<{success: boolean, error: *}|{success: boolean, body: *}>}
@@ -86,28 +92,25 @@ class BrandServices {
     try {
       const brandObj = {
         brand_name: data.name,
-        brand_file: data.brand_file
+        brand_file: data.brand_file,
       };
-      
+
       const result = await BrandsModel.update(brandObj, { where: { id } });
 
       return { success: true, body: result };
     } catch (error) {
       return { success: false, error: error };
     }
-  };
+  }
 
   /**
-   * 
-   * @param {Integer} id 
-   * @param {Integer} user_id 
+   *
+   * @param {Integer} id
+   * @param {Integer} user_id
    */
   async updateActiveBrand(id, user_id) {
     try {
-
-    } catch (error) {
-
-    }
+    } catch (error) {}
   }
 
   /**
@@ -134,7 +137,7 @@ class BrandServices {
         },
       });
 
-      return { result };
+      return { success: true, data: result };
     } catch (error) {
       return { success: false, error: error };
     }
@@ -148,13 +151,13 @@ class BrandServices {
         },
       });
 
-      const brandsData = result.map(brand => brand.dataValues);
+      const brandsData = result.map((brand) => brand.dataValues);
 
       return { success: true, body: brandsData };
     } catch (error) {
       return { success: false, error: error };
     }
   }
-};
+}
 
 module.exports = BrandServices;
