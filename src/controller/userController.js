@@ -62,12 +62,6 @@ method.logInUser = async (req, res) => {
             firstName: verifiedEmail.firstName,
             lastName: verifiedEmail.lastName,
           },
-          {
-            id: verifiedEmail.id,
-            email: verifiedEmail.email,
-            firstName: verifiedEmail.firstName,
-            lastName: verifiedEmail.lastName,
-          },
           process.env.SECRETKEY
         );
 
@@ -86,7 +80,7 @@ method.logInUser = async (req, res) => {
       res.status(400).json({ message: "this email is not exist" });
     }
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json(error);
   }
 };
