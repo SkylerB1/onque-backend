@@ -62,6 +62,12 @@ method.logInUser = async (req, res) => {
             firstName: verifiedEmail.firstName,
             lastName: verifiedEmail.lastName,
           },
+          {
+            id: verifiedEmail.id,
+            email: verifiedEmail.email,
+            firstName: verifiedEmail.firstName,
+            lastName: verifiedEmail.lastName,
+          },
           process.env.SECRETKEY
         );
 
@@ -306,12 +312,16 @@ method.userConnections = async (req, res) => {
 };
 
 method.userBrand = async (req, res) => {
-  const userId = req.user?.id;
-  const selectedBrand = await brandServicesInterface.getSelectedBrand(userId);
-  if (selectedBrand.success) {
-    return res.status(200).json(selectedBrand.data);
-  } else {
-    return res.status(400).json(selectedBrand.data);
+  try {
+    const userId = req.user?.id;
+    const res = await brandServicesInterface.getSelectedBrand(userId);
+    if (res.success) {
+      return res.status(200).json(res.data);
+    } else {
+      return res.status(400).json(res.error);
+    }
+  } catch (err) {
+    return res.status(400).json(err);
   }
 };
 
