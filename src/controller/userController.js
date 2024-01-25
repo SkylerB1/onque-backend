@@ -309,11 +309,11 @@ method.userConnections = async (req, res) => {
 method.userBrand = async (req, res) => {
   try {
     const userId = req.user?.id;
-    const res = await brandServicesInterface.getSelectedBrand(userId);
-    if (res.success) {
-      return res.status(200).json(res.data);
+    const response = await brandServicesInterface.getSelectedBrand(userId);
+    if (response.success) {
+      return res.status(200).json(response.data);
     } else {
-      return res.status(400).json(res.error);
+      return res.status(400).json(response.error);
     }
   } catch (err) {
     return res.status(400).json(err);
