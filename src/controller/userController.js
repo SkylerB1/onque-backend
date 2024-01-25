@@ -86,7 +86,8 @@ method.logInUser = async (req, res) => {
       res.status(400).json({ message: "this email is not exist" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong" });
+    console.log(error)
+    res.status(500).json(error);
   }
 };
 
