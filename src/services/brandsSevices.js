@@ -39,6 +39,10 @@ class BrandServices {
           {
             model: socialTokens,
             as: "socialTokens",
+            where: {
+              userId: user_id,
+              isConnected: 1,
+            },
             attributes: ["id", "userId", "platform", "screenName", "brandId"],
           },
         ],
