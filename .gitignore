@@ -3,7 +3,5 @@
 
 # local env files
 .env
-
-src/config/
-
+src/config
 assets/

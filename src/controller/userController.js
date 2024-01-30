@@ -80,7 +80,8 @@ method.logInUser = async (req, res) => {
       res.status(400).json({ message: "this email is not exist" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong" });
+    console.log(error);
+    res.status(500).json(error);
   }
 };
 
@@ -329,12 +330,16 @@ method.userConnections = async (req, res) => {
 };
 
 method.userBrand = async (req, res) => {
-  const userId = req.user?.id;
-  const selectedBrand = await brandServicesInterface.getSelectedBrand(userId);
-  if (selectedBrand.success) {
-    return res.status(200).json(selectedBrand.data);
-  } else {
-    return res.status(400).json(selectedBrand.data);
+  try {
+    const userId = req.user?.id;
+    const response = await brandServicesInterface.getSelectedBrand(userId);
+    if (response.success) {
+      return res.status(200).json(response.data);
+    } else {
+      return res.status(400).json(response.error);
+    }
+  } catch (err) {
+    return res.status(400).json(err);
   }
 };
 
