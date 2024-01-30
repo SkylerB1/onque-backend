@@ -9,15 +9,8 @@ const twitterStrategy = (req, res, next) => {
     TWITTER_CONSUMER_KEY,
     TWITTER_CONSUMER_SECRET,
     TWITTER_CALLBACK_URL,
-    REDIRECT_URL
   } = process.env;
-  console.log({
-    TWITTER_CONSUMER_KEY,
-    TWITTER_CONSUMER_SECRET,
-    TWITTER_CALLBACK_URL,
-    REDIRECT_URL
-  })
-
+  
   const userId = req.query.userId;
   const brandId = req.query.brandId;
 

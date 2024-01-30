@@ -56,7 +56,12 @@ method.logInUser = async (req, res) => {
       );
       if (verifiedPassword) {
         const authToken = jwt.sign(
-          { id: verifiedEmail.id, email: verifiedEmail.email, firstName: verifiedEmail.firstName, lastName: verifiedEmail.lastName },
+          {
+            id: verifiedEmail.id,
+            email: verifiedEmail.email,
+            firstName: verifiedEmail.firstName,
+            lastName: verifiedEmail.lastName,
+          },
           process.env.SECRETKEY
         );
 
@@ -324,12 +329,12 @@ method.userConnections = async (req, res) => {
 };
 
 method.userBrand = async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    const selectedBrand = await brandServicesInterface.getSelectedBrand(userId);
-    return res.status(200).json(selectedBrand);
-  } catch (error) {
-    return res.status(400).json(err);
+  const userId = req.user?.id;
+  const selectedBrand = await brandServicesInterface.getSelectedBrand(userId);
+  if (selectedBrand.success) {
+    return res.status(200).json(selectedBrand.data);
+  } else {
+    return res.status(400).json(selectedBrand.data);
   }
 };
 
