@@ -7,6 +7,7 @@ const { ValidationSource, validator } = require("../utils/validator")
 
 router.post('/register', validator(registerSchema.register, ValidationSource.BODY) ,UserController.register)
 router.post('/login', validator(loginSchema.login, ValidationSource.BODY), UserController.logInUser)
+router.get("/user-info", verifyToken, UserController.getUserInfo)
 router.post('/send-email', UserController.sendEmail)
 router.patch('/forgot-password', UserController.forgotPassword)
 router.get("/connections", verifyToken, UserController.userConnections)

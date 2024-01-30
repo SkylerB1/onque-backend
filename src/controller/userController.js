@@ -145,7 +145,7 @@ method.sendEmail = async (req, res) => {
             <h1 class="headerLogo">OnQue</h1>
             <p class="message">
             You're getting this email because you requested recover your account. If you didn't intend to do this, just ignore this email.</p>
-            <a href="https://jjmedia.appwrk.com//setting/iIdentification?email=${email}" class="button">
+            <a href="https://jjmedia.appwrk.com/setting/iIdentification?email=${email}" class="button">
             Recover my password
             </a>
             <p class="myMail"><a>${email}</a></p>            
@@ -173,8 +173,31 @@ method.sendEmail = async (req, res) => {
     } else {
       res.status(400).json({ message: "Please enter a valid email address!" });
     }
-  } catch (error) {}
+  } catch (error) { }
 };
+
+
+method.getUserInfo = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const data = await userInterface.userData(userId);
+    const authToken = jwt.sign(
+      { id: data.id, email: data.email, firstName: data.firstName, lastName: data.lastName },
+      process.env.SECRETKEY
+    );
+    res.status(200).json({
+      id: data.id,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      access_token: authToken,
+      // message: "userfully",
+    });
+    
+  } catch (error) {
+    res.status(400).json({ message: "No data found" });
+  }
+}
 
 /**
  *
@@ -209,7 +232,7 @@ method.forgotPassword = async (req, res) => {
         });
       }
     }
-  } catch (error) {}
+  } catch (error) { }
 };
 
 method.getPostData = async (req, res) => {

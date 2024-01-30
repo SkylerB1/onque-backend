@@ -12,8 +12,38 @@ const {
   getReelUploadStatus,
 } = require("../utils/facebook/FacebookUtilFunctions");
 const { buildAPIURL, isReelUploadSuccessful } = require("../utils/instagram");
+const Users = require("../models/Users");
+;
+const UserService = require("../services/userServices");
+const userInterface = new UserService();
+const BrandServices = require("../services/brandsSevices");
+const brandServicesInterface = new BrandServices();
 
 class FacebookService {
+
+  async saveLoginFacebookDetails(creds) {
+    const existingUser = await Users.findOne({
+      where: {
+        email: creds?.email
+      }
+    });
+
+    if (existingUser) {
+      return existingUser;
+    } else {
+      const data = await userInterface.createUser({
+        firstName: creds.name,
+        lastName: "",
+        email: creds.email,
+        password: "",
+      });
+      const user_id = data.id;
+      const brand_name = "Empty Brand";
+      await brandServicesInterface.createBrand(brand_name, user_id);
+      return data;
+    }
+  }
+
   async setConnection(brandId, data, userId, platform, isConnected = 1, screenName) {
     try {
       const encryptedCreds = encryptToken(data);

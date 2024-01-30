@@ -12,7 +12,11 @@ const verifyToken = (request, response, next) => {
   try {
     const token = BearerToken.split(" ")[1];
     const decoded = jwt.verify(token, process.env.SECRETKEY);
-    request.user = decoded;
+    if (decoded.data) {
+      request.user = decoded.data;
+    } else {
+      request.user = decoded;
+    }
   } catch (err) {
     return response.status(401).json({
       status: 401,
@@ -23,6 +27,7 @@ const verifyToken = (request, response, next) => {
 };
 
 const createToken = (userId) => {
+
   const payload = {
     id: userId,
   };
@@ -30,7 +35,7 @@ const createToken = (userId) => {
     {
       data: payload,
     },
-    process.env.SECRET_KEY
+    process.env.SECRETKEY
   );
 
   const refreshToken = jwt.sign(

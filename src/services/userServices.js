@@ -61,6 +61,14 @@ class UserService {
     }
   }
 
+  async userData(userId){
+    return Users.findOne({
+      where: {
+        id: userId,
+      },
+    });
+  }
+
   /**
    *
    * @param {Integer} userId
@@ -224,6 +232,14 @@ class UserService {
     } else {
       return null;
     }
+  }
+
+  async findUserByName(name) {
+    return await Users.findOne({
+      where: {
+        firstName:name
+      }
+    });
   }
 }
 
