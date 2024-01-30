@@ -33,7 +33,6 @@ passport.use(
     )
 )
 
-routes.get('/facebookLogin', passport.authenticate('facebook', { scope: 'email' }));
 
 routes.get('/callback', passport.authenticate('facebook', {
     failureRedirect: '/auth/facebook/error',

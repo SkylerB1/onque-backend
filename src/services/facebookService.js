@@ -28,12 +28,13 @@ class FacebookService {
       }
     });
 
+    const nameArray = creds.name.split(' ');
     if (existingUser) {
       return existingUser;
     } else {
       const data = await userInterface.createUser({
-        firstName: creds.name,
-        lastName: "",
+        firstName: nameArray[0] || "",
+        lastName: nameArray.slice(1).join(' ') || "",
         email: creds.email,
         password: "",
       });

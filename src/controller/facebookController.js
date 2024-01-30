@@ -5,10 +5,6 @@ const {
 } = require("../utils/CommonString");
 const facebookService = new FacebookService();
 
-const facebookLogin = async (req, res ) => {
-  const name = req.body.name;
-}
-
 const facebookPages = async (req, res) => {
   try {
     const data = req.body;
@@ -116,7 +112,6 @@ const sharePost = async (req, res) => {
 };
 
 module.exports = {
-  facebookLogin,
   sharePost,
   facebookPages,
   facebookConnect,

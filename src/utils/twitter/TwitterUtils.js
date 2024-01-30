@@ -81,6 +81,26 @@ const TwitterSharePost = async (data, platform, userId, brandId) => {
   }
 };
 
+const twitterLogin = async (encryptedCreds, username,) => {
+  const existingUser = await userInterface.findUserByName(username);
+
+  if (existingUser) {
+    return existingUser;
+  } else {
+    const data = await userInterface.createUser({
+      firstName: username,
+      lastName: "",
+      email: "",
+      password: "",
+    });
+    const user_id = data.id;
+    const brand_name = "Empty Brand";
+    await brandServicesInterface.createBrand(brand_name, user_id);
+    return data;
+  }
+}
+
 module.exports = {
   TwitterSharePost,
+  twitterLogin,
 };

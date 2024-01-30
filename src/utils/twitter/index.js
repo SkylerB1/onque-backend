@@ -1,8 +1,9 @@
 const passport = require("passport");
 const { encryptToken } = require("../../middleware/encryptToken");
-const { saveConnection, twitterLogin } = require("../postUtils");
+const { saveConnection } = require("../postUtils");
 const { Strategy } = require("passport-twitter");
 const { TwitterPlatform } = require("../CommonString");
+const { twitterLogin } = require("./TwitterUtils");
 
 const twitterStrategy = (req, res, next) => {
   const {
