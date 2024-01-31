@@ -49,7 +49,7 @@ router.get("/twitter/login",
 );
 
 router.get(
-  "/login/twitter/callback",
+  "/twitter/login/callback",
   passport.authenticate("twitter", {
     // successRedirect: LOGIN_REDIRECT_URL,
     failureRedirect: REDIRECT_URL,
@@ -57,7 +57,7 @@ router.get(
   (req, res) => {
     const { id } = req.user
     const { accessToken, refreshToken } = createToken(id)
-    const redirectUrl = 'http://localhost:5173/planner/calendar'
+    const redirectUrl = LOGIN_REDIRECT_URL
     res.cookie('refresh_token', refreshToken, { httpOnly: true }).cookie('access_token', accessToken, { httpOnly: true });
 
     res.redirect(redirectUrl)
@@ -116,16 +116,14 @@ router.get(
   ),
 );
 
-router.get('/facebook/callback',
+router.get('/facebook/login/callback',
   passport.authenticate('facebook', {
     failureRedirect: LOGIN_REDIRECT_URL
   }),
   (req, res) => {
     const { id } = req.user.response
     const { accessToken, refreshToken } = createToken(id)
-    const redirectUrl = 'http://localhost:5173/planner/calendar'
-    // res.cookie('access_token', accessToken)
-    // res.cookie('refresh_token', refreshToken)
+    const redirectUrl = LOGIN_REDIRECT_URL
     res.cookie('refresh_token', refreshToken).cookie('access_token', accessToken);
 
     res.redirect(redirectUrl)

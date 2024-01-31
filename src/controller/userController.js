@@ -7,6 +7,7 @@ var request = require("request");
 const mailer = require("@sendgrid/mail");
 const { createPost, publishPosts } = require("../utils/postUtils");
 const BrandServices = require("../services/brandsSevices");
+const { createToken } = require("../middleware/auth.middleware");
 const brandServicesInterface = new BrandServices();
 
 const method = {};
@@ -187,19 +188,16 @@ method.getUserInfo = async (req, res) => {
   try {
     const userId = req.user?.id;
     const data = await userInterface.userData(userId);
-    const authToken = jwt.sign(
-      { id: data.id, email: data.email, firstName: data.firstName, lastName: data.lastName },
-      process.env.SECRETKEY
-    );
+    const { accessToken, refreshToken } = createToken(userId)
     res.status(200).json({
       id: data.id,
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
-      access_token: authToken,
-      // message: "userfully",
+      access_token: accessToken,
+      refresh_token: refreshToken,
     });
-    
+
   } catch (error) {
     res.status(400).json({ message: "No data found" });
   }
