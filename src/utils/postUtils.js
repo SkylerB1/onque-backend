@@ -8,6 +8,10 @@ const SocialMediaToken = require("../models/SocialMediaToken");
 const { TwitterSharePost } = require("./twitter/TwitterUtils");
 const { YoutubeShareVideo } = require("./youtube/YoutubeUtils");
 const { GBusinessSharePost } = require("./google-business/GoogleBusinessUtil");
+const UserService = require("../services/userServices");
+const userInterface = new UserService();
+const BrandServices = require("../services/brandsSevices");
+const brandServicesInterface = new BrandServices();
 
 const schedulePosts = async () => {
   const posts = await getAllPendingPosts();
@@ -125,12 +129,7 @@ const publishPosts = async (data, userId, brandId) => {
           platform: platform,
         });
       } else if (platform.includes("Twitter")) {
-        const response = await TwitterSharePost(
-          shareData,
-          platform,
-          userId,
-          brandId
-        );
+        const response = await TwitterSharePost(shareData, platform, userId, brandId);
         result.push({
           status: response.success ? "Published" : "Error",
           message: response.data,
@@ -266,6 +265,8 @@ const saveConnection = async (
     return { success: false, data: err };
   }
 };
+
+
 
 module.exports = {
   schedulePosts,

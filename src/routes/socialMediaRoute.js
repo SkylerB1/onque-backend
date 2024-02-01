@@ -10,12 +10,14 @@ const YoutubeController = require("../controller/youTubeController");
 const GoogleBusinessController = require("../controller/GoogleBusinessController");
 
 const TokenController = require("../controller/tokenController");
-const { verifyToken } = require("../middleware/auth.middleware");
-const { twitterStrategy } = require("../utils/twitter");
+const { verifyToken, createToken } = require("../middleware/auth.middleware");
+const { twitterStrategy, twitterLoginStrategy } = require("../utils/twitter");
 const { youtubeStrategy } = require("../utils/youtube");
 const { googleBusinessStrategy } = require("../utils/google-business");
 const { GoogleBusinessPlatform } = require("../utils/CommonString");
-const { REDIRECT_URL } = process.env;
+const { facebookStrategy } = require("../utils/facebook");
+const { REDIRECT_URL, LOGIN_REDIRECT_URL } = process.env;
+const jwt = require("jsonwebtoken");
 
 router.get(
   "/google_business",
@@ -39,12 +41,36 @@ router.get(
   })
 );
 
+router.get("/twitter/login",
+  twitterLoginStrategy,
+  passport.authenticate("twitter", {
+    scope: ["tweet.read", "tweet.write", "users.read", "offline.access"],
+  })
+);
+
+router.get(
+  "/twitter/login/callback",
+  passport.authenticate("twitter", {
+    // successRedirect: LOGIN_REDIRECT_URL,
+    failureRedirect: REDIRECT_URL,
+  }),
+  (req, res) => {
+    const { id } = req.user
+    const { accessToken, refreshToken } = createToken(id)
+    const redirectUrl = LOGIN_REDIRECT_URL
+    res.cookie('refresh_token', refreshToken, { httpOnly: true }).cookie('access_token', accessToken, { httpOnly: true });
+
+    res.redirect(redirectUrl)
+
+  }
+);
+
+
 router.get(
   "/twitter",
   twitterStrategy,
   passport.authenticate("twitter", {
     scope: ["tweet.read", "tweet.write", "users.read", "offline.access"],
-
   })
 );
 
@@ -53,7 +79,7 @@ router.get(
   passport.authenticate("twitter", {
     successRedirect: REDIRECT_URL,
     failureRedirect: REDIRECT_URL,
-  })
+  }),
 );
 
 router.get(
@@ -83,11 +109,31 @@ router.post(
 router.post("/linkedin/share", verifyToken, LinkedInController.sharePost);
 
 //facebook
+router.get(
+  "/facebook/login",
+  facebookStrategy,
+  passport.authenticate(`facebook`, { scope: ['public_profile', 'email'], },
+  ),
+);
+
+router.get('/facebook/login/callback',
+  passport.authenticate('facebook', {
+    failureRedirect: LOGIN_REDIRECT_URL
+  }),
+  (req, res) => {
+    const { id } = req.user.response
+    const { accessToken, refreshToken } = createToken(id)
+    const redirectUrl = LOGIN_REDIRECT_URL
+    res.cookie('refresh_token', refreshToken).cookie('access_token', accessToken);
+
+    res.redirect(redirectUrl)
+
+  }
+);
+
 router.post("/facebook/pages", verifyToken, FacebookController.facebookPages);
 router.post(
-  "/facebook/connection",
-  verifyToken,
-  FacebookController.facebookConnect
+  "/facebook/connection", verifyToken, FacebookController.facebookConnect
 );
 
 router.post("/setToken", TokenController.setToken);
