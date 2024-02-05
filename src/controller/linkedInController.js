@@ -12,21 +12,21 @@ const userService = new UserService();
 
 const linkedinToken = async (req, res) => {
   try {
-    const code = req.body?.code;
     const userId = req.user?.id;
     const brandId = req.query.brandId;
-    const token = await service.getAccessToken(code);
-    if (token.success) {
-      const profile = await service.getProfile(token.data.access_token);
-      if (profile.success) {
-        const data = { ...token.data, ...profile.data };
-        await service.setMediaToken(data, userId, brandId, LinkedInPlatform, 0);
-        return res.status(200).json(profile.data);
-      } else {
-        res.status(400).json(profile.data);
-      }
+    const creds = await userService.getTokenByIdPlatform(
+      userId,
+      LinkedInPlatform,
+      0,
+      brandId
+    );
+    const profile = await service.getProfile(creds?.accessToken);
+    if (profile.success) {
+      const data = { ...creds.data, ...profile.data };
+      await service.setMediaToken(data, userId, brandId, LinkedInPlatform, 0);
+      return res.status(200).json(profile.data);
     } else {
-      res.status(400).json(token.data);
+      res.status(400).json(profile.data);
     }
   } catch (err) {
     res.status(500).json(err);
@@ -35,35 +35,36 @@ const linkedinToken = async (req, res) => {
 
 const linkedInPages = async (req, res) => {
   try {
-    const code = req.body?.code;
     const userId = req.user?.id;
     const brandId = req.query.brandId;
 
-    const token = await service.getAccessToken(code);
-    if (token.success) {
-      const accessToken = token.data.access_token;
+    const creds = await userService.getTokenByIdPlatform(
+      userId,
+      LinkedInPagePlatform,
+      0,
+      brandId
+    );
 
-      const [tokenResponse, pageData] = await Promise.all([
-        await service.setMediaToken(token.data, userId, brandId, LinkedInPagePlatform),
-        await service.getLinkedInPageIds(accessToken),
-      ]);
+    const [tokenResponse, pageData] = await Promise.all([
+      await service.setMediaToken(creds, userId, brandId, LinkedInPagePlatform),
+      await service.getLinkedInPageIds(creds?.accessToken),
+    ]);
 
-      if (pageData.success && tokenResponse.status) {
-        const pages = await service.getLinkedInPages(
-          pageData.data.elements,
-          accessToken
-        );
-        return res.status(pages.status).json(pages.data);
-      } else {
-        return res.status(pageData.status).json(pageData.data);
-      }
+    if (pageData.success && tokenResponse.status) {
+      const pages = await service.getLinkedInPages(
+        pageData.data.elements,
+        creds?.accessToken
+      );
+
+      return res.status(pages.status).json(pages.data);
     } else {
-      return res.status(token.status).json(token.data);
+
+      return res.status(pageData.status).json(pageData.data);
     }
   } catch (err) {
     console.log(err);
   }
-};  
+};
 const linkedInConnect = async (req, res) => {
   try {
     const data = req?.body;

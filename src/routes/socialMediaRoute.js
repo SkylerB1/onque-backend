@@ -14,10 +14,11 @@ const { verifyToken, createToken } = require("../middleware/auth.middleware");
 const { twitterStrategy, twitterLoginStrategy } = require("../utils/twitter");
 const { youtubeStrategy } = require("../utils/youtube");
 const { googleBusinessStrategy } = require("../utils/google-business");
-const { GoogleBusinessPlatform } = require("../utils/CommonString");
-const { facebookStrategy } = require("../utils/facebook");
+const { GoogleBusinessPlatform, FacebookPagePlatform, LinkedInPlatform, LinkedInPagePlatform } = require("../utils/CommonString");
+const { facebookStrategy, facebookloginStrategy } = require("../utils/facebook");
 const { REDIRECT_URL, LOGIN_REDIRECT_URL } = process.env;
 const jwt = require("jsonwebtoken");
+const { linkdInStrategy, linkdInProfileStrategy } = require("../utils/linkedin");
 
 router.get(
   "/google_business",
@@ -51,7 +52,6 @@ router.get("/twitter/login",
 router.get(
   "/twitter/login/callback",
   passport.authenticate("twitter", {
-    // successRedirect: LOGIN_REDIRECT_URL,
     failureRedirect: REDIRECT_URL,
   }),
   (req, res) => {
@@ -99,8 +99,32 @@ router.get("/youtube/categories", verifyToken, YoutubeController.getCategories);
 router.get("/get_specific_post_data", UserController.getSpecificPostData);
 
 //linkedin
-router.post("/linkedin/profile", verifyToken, LinkedInController.linkedinToken);
-router.post("/linkedin/pages", verifyToken, LinkedInController.linkedInPages);
+router.get('/linkedin',
+  linkdInStrategy,
+  passport.authenticate('linkedin'),
+);
+
+router.get('/linkedin/callback',
+  passport.authenticate('linkedin', {
+    successRedirect: REDIRECT_URL + `?platform=${LinkedInPagePlatform}`,
+    failureRedirect: REDIRECT_URL + `?platform=${LinkedInPagePlatform}`,
+  })
+);
+
+router.get('/linkedin/profile/login',
+  linkdInProfileStrategy,
+  passport.authenticate('linkedin'),
+);
+
+router.get('/linkedin/profile/callback',
+  passport.authenticate('linkedin', {
+    successRedirect: REDIRECT_URL + `?platform=${LinkedInPlatform}`,
+    failureRedirect: REDIRECT_URL + `?platform=${LinkedInPlatform}`,
+  })
+);
+
+router.get("/linkedin/profile", verifyToken, LinkedInController.linkedinToken);
+router.get("/linkedin/pages", verifyToken, LinkedInController.linkedInPages);
 router.post(
   "/linkedin/connection",
   verifyToken,
@@ -111,7 +135,7 @@ router.post("/linkedin/share", verifyToken, LinkedInController.sharePost);
 //facebook
 router.get(
   "/facebook/login",
-  facebookStrategy,
+  facebookloginStrategy,
   passport.authenticate(`facebook`, { scope: ['public_profile', 'email'], },
   ),
 );
@@ -131,7 +155,20 @@ router.get('/facebook/login/callback',
   }
 );
 
-router.post("/facebook/pages", verifyToken, FacebookController.facebookPages);
+router.get('/facebook',
+  facebookStrategy,
+  passport.authenticate('facebook', { scope: ['public_profile', 'email'], }
+  ),
+);
+
+router.get('/facebook/callback',
+  passport.authenticate('facebook', {
+    successRedirect: REDIRECT_URL + `?platform=${FacebookPagePlatform}`,
+    failureRedirect: REDIRECT_URL + `?platform=${FacebookPagePlatform}`,
+  })
+)
+
+router.get("/facebook/pages", verifyToken, FacebookController.facebookPages);
 router.post(
   "/facebook/connection", verifyToken, FacebookController.facebookConnect
 );

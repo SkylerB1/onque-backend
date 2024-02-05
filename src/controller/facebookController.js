@@ -1,4 +1,6 @@
 const FacebookService = require("../services/facebookService");
+const UserService = require("../services/userServices");
+const userService = new UserService();
 const {
   FacebookPagePlatform,
   InstagramPlatform,
@@ -7,15 +9,20 @@ const facebookService = new FacebookService();
 
 const facebookPages = async (req, res) => {
   try {
-    const data = req.body;
     const userId = req.user.id;
     const brandId = req.query.brandId;
-    const { accessToken, userID } = data;
+    const creds = await userService.getTokenByIdPlatform(
+      userId,
+      FacebookPagePlatform,
+      0,
+      brandId
+    );
+    const { accessToken, id } = creds;
 
     let response = [];
 
     const pageData = await facebookService.getFacebookPages(
-      userID,
+      id,
       accessToken
     );
     if (pageData.success) {
