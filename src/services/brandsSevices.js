@@ -43,7 +43,8 @@ class BrandServices {
               userId: user_id,
               isConnected: 1,
             },
-            attributes: ["id", "userId", "platform", "screenName", "brandId"],
+            attributes: ["id", "userId", "platform", "screenName"],
+            required: false,
           },
         ],
       };

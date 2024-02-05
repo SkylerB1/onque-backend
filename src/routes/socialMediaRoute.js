@@ -15,6 +15,7 @@ const { twitterStrategy, twitterLoginStrategy } = require("../utils/twitter");
 const { youtubeStrategy } = require("../utils/youtube");
 const { googleBusinessStrategy } = require("../utils/google-business");
 const { GoogleBusinessPlatform, FacebookPagePlatform, LinkedInPlatform, LinkedInPagePlatform } = require("../utils/CommonString");
+const { tiktokStrategy } = require("../utils/tiktok");
 const { facebookStrategy, facebookloginStrategy } = require("../utils/facebook");
 const { REDIRECT_URL, LOGIN_REDIRECT_URL } = process.env;
 const jwt = require("jsonwebtoken");
@@ -92,6 +93,22 @@ router.post(
   "/google_business/connect",
   verifyToken,
   GoogleBusinessController.ConnectLocation
+);
+
+router.get(
+  "/tiktok",
+  tiktokStrategy,
+  passport.authenticate("tiktok", {
+    scope: ["user.info.basic", "video.publish", "video.upload"],
+  })
+);
+
+router.get(
+  "/tiktok/callback",
+  passport.authenticate("tiktok", {
+    successRedirect: REDIRECT_URL,
+    failureRedirect: REDIRECT_URL,
+  })
 );
 
 router.get("/youtube/categories", verifyToken, YoutubeController.getCategories);
