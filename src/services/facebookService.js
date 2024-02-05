@@ -162,7 +162,6 @@ class FacebookService {
 
         try {
           const finalResponse = await axios.post(publishReelUri);
-          console.log(finalResponse.data);
           if (finalResponse.status === 200) {
             const checkStatusUri = buildAPIURL(
               `${video_id}`,
@@ -186,7 +185,6 @@ class FacebookService {
           };
         }
 
-        console.log("FinalResponse???", finalResponse);
       } else {
         return { success: false, data: reelUploadResponse.data };
       }
@@ -223,7 +221,6 @@ class FacebookService {
   }
 
   async sharePost(data, pageId, accessToken, isPhoto) {
-    console.log("isPhoto????", isPhoto);
     const sharePhotoUri = buildAPIURL(`${pageId}/photos`, {
       access_token: accessToken,
     });
@@ -246,7 +243,6 @@ class FacebookService {
             // url: "https://fastly.picsum.photos/id/237/200/300.jpg?hmac=TmmQSbShHz9CdQm0NkEjx1Dyh_Y984R9LpNrpvH2D_U",
           };
           const response = await this.upload(sharePhotoUri, unPublishedData);
-          console.log("Multi Upload Response", response);
           if (response.status === 200) {
             attached_media.push({
               media_fbid: response.data.id,
@@ -309,7 +305,6 @@ class FacebookService {
         `${pageId}?fields=instagram_business_account&access_token=${accessToken}`;
 
       const account = await axios.get(ACCOUNT_URL);
-      console.log("ACCOUNT", account);
       const isInstaAccount = account.data.instagram_business_account ?? null;
 
       if (account.status === 200 && isInstaAccount) {
@@ -337,26 +332,43 @@ class FacebookService {
     }
   }
 
+  async collectAllPages(url, data = { data: [], paging: {} }) {
+    try {
+      const res = await axios.get(url);
+      const next = res.data?.paging?.next ?? null;
+      const nextResponse = {
+        data: [...data.data, ...res.data.data],
+        paging: { ...res.data.paging },
+      };
+      if (next) {
+        return this.collectAllPages(next, nextResponse);
+      }
+      return nextResponse;
+    } catch (err) {
+      console.log("err?", err);
+      return [];
+    }
+  }
+
   async getFacebookPages(userId, access_token) {
     const PAGES_URL = `https://graph.facebook.com/v18.0/${userId}/accounts?access_token=${access_token}`;
-    let data = [];
+    const pages = []
     try {
-      const response = await axios.get(PAGES_URL);
-      if (response.status === 200) {
-        const pages = response.data.data;
-        for (let page of pages) {
-          const PAGE_DATA_URL = `https://graph.facebook.com/${page.id}?fields=picture&access_token=${page.access_token}`;
-          const response = await axios.get(PAGE_DATA_URL);
-          const profile = response.data.picture.data.url;
-          data.push({ ...page, profile });
-        }
+      const response = await this.collectAllPages(PAGES_URL);
+      const { data } = response;
 
-        return {
-          success: true,
-          data: data,
-          status: response.status,
-        };
+      for (let page of data) {
+        const PAGE_DATA_URL = `https://graph.facebook.com/${page.id}?fields=picture&access_token=${page.access_token}`;
+        const response = await axios.get(PAGE_DATA_URL);
+        const profile = response.data.picture.data.url;
+        pages.push({ ...page, profile });
       }
+
+      return {
+        success: true,
+        data: pages,
+        status: 200,
+      };
     } catch (err) {
       return {
         success: false,
