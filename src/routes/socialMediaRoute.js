@@ -116,7 +116,7 @@ router.get("/youtube/categories", verifyToken, YoutubeController.getCategories);
 router.get("/get_specific_post_data", UserController.getSpecificPostData);
 
 //linkedin
-router.get('/linkedin',
+router.get('/linkedin/page',
   linkdInStrategy,
   passport.authenticate('linkedin'),
 );
@@ -128,19 +128,18 @@ router.get('/linkedin/callback',
   })
 );
 
-router.get('/linkedin/profile/login',
+router.get('/linkedin/profile',
   linkdInProfileStrategy,
   passport.authenticate('linkedin'),
 );
 
 router.get('/linkedin/profile/callback',
   passport.authenticate('linkedin', {
-    successRedirect: REDIRECT_URL + `?platform=${LinkedInPlatform}`,
-    failureRedirect: REDIRECT_URL + `?platform=${LinkedInPlatform}`,
+    successRedirect: REDIRECT_URL,
+    failureRedirect: REDIRECT_URL 
   })
 );
 
-router.get("/linkedin/profile", verifyToken, LinkedInController.linkedinToken);
 router.get("/linkedin/pages", verifyToken, LinkedInController.linkedInPages);
 router.post(
   "/linkedin/connection",

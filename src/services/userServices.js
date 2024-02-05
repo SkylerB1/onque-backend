@@ -5,6 +5,7 @@ const Posts = require("../models/Posts");
 const MediaFile = require("../models/mediaFile");
 const { Op } = require("sequelize");
 const { decryptToken } = require("../middleware/encryptToken");
+const BrandsModel = require("../models/brands");
 
 class UserService {
   /**
@@ -61,7 +62,7 @@ class UserService {
     }
   }
 
-  async userData(userId){
+  async userData(userId) {
     return Users.findOne({
       where: {
         id: userId,
@@ -188,6 +189,11 @@ class UserService {
     return await SocialMediaToken.destroy({ where: where });
   }
 
+  async deleteClient(id) {
+    let where = { id };
+    return await BrandsModel.destroy({ where: where });
+  }
+
   async scheduleData() {
     const currentDate = new Date(); // Get the current date and time
     const status = "pending";
@@ -237,7 +243,7 @@ class UserService {
   async findUserByName(name) {
     return await Users.findOne({
       where: {
-        firstName:name
+        firstName: name
       }
     });
   }

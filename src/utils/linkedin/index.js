@@ -83,9 +83,9 @@ const linkdInProfileStrategy = (req, res, next) => {
       encryptedCreds,
       userId,
       brandId,
-      creds.displayName,
+      profile.displayName,
       LinkedInPlatform,
-      0
+      1
     );
 
     if (response.success) {
