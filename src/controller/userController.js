@@ -310,6 +310,21 @@ method.logoutSocialMedia = async (req, res) => {
   }
 };
 
+method.delete = async (req, res) => {
+  try {
+    const brandId = req.params.id;
+    const response = await userInterface.deleteClient(brandId)
+    res.status(200).json({
+      message: "Delete successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: "Something went wrong",
+      error: err.message,
+    });
+  }
+}
+
 method.userConnections = async (req, res) => {
   const userId = req.user?.id;
   const brandId = req.query?.brandId;

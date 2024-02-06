@@ -15,6 +15,7 @@ router.get("/brand", verifyToken, UserController.userBrand)
 router.get('/getPostData/:id', verifyToken, UserController.getPostData)
 router.post("/scheduler/posts/:id",verifyToken,UserController.schedulePosts);
 router.patch('/deletePost', UserController.deletePostData)
+router.delete('/delete/client/:id', UserController.delete)
 router.delete('/logout/socialMedia/:id', UserController.logoutSocialMedia)
 
 module.exports = router;
