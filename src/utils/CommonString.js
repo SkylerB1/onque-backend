@@ -5,7 +5,9 @@ const InstagramPlatform = "Instagram";
 const TwitterPlatform = "Twitter";
 const YouTubePlatform = "YouTube";
 const GoogleBusinessPlatform = "Google_Business";
-const TikTokPlatform = "TikTok";
+const TikTokPersonalPlatform = "TikTok_Personal";
+const TikTokBusinessPlatform = "TikTok_Business";
+
 
 const REEL = "REEL";
 
@@ -18,5 +20,6 @@ module.exports = {
   TwitterPlatform,
   YouTubePlatform,
   GoogleBusinessPlatform,
-  TikTokPlatform,
+  TikTokPersonalPlatform,
+  TikTokBusinessPlatform
 };

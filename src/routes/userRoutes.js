@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const UserController = require("../controller/userController");
+const TiktokController = require("../controller/tiktokController");
 const {verifyToken} = require("../middleware/auth.middleware");
 const { registerSchema, loginSchema } = require("../utils/schema/schema");
 const { ValidationSource, validator } = require("../utils/validator")
@@ -17,5 +18,5 @@ router.post("/scheduler/posts/:id",verifyToken,UserController.schedulePosts);
 router.patch('/deletePost', UserController.deletePostData)
 router.delete('/delete/client/:id', UserController.delete)
 router.delete('/logout/socialMedia/:id', UserController.logoutSocialMedia)
-
+router.get('/tiktok/creator-info',verifyToken ,TiktokController.getTiktokCreatorInfo)
 module.exports = router;

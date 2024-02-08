@@ -2,12 +2,18 @@ const passport = require("passport");
 const { encryptToken } = require("../../middleware/encryptToken");
 const { saveConnection } = require("../postUtils");
 const { Strategy } = require("passport-tiktok-auth");
-const { TikTokPlatform } = require("../CommonString");
+const {
+  TikTokPersonalPlatform,
+  TikTokBusinessPlatform,
+} = require("../CommonString");
 
 const tiktokStrategy = (req, res, next) => {
   const { TIKTOK_CLIENT_ID, TIKTOK_CLIENT_SECRET, TIKTOK_CALLBACK_URL } =
     process.env;
-
+  const type =
+    req.query.type === "business"
+      ? TikTokBusinessPlatform
+      : TikTokPersonalPlatform;
   const userId = req.query.userId;
   const brandId = req.query.brandId;
 
@@ -20,7 +26,6 @@ const tiktokStrategy = (req, res, next) => {
         callbackURL: TIKTOK_CALLBACK_URL,
       },
       async (token, tokenSecret, profile, cb) => {
-        console.log(token, tokenSecret, profile, cb);
         const creds = {
           token,
           tokenSecret,
@@ -32,7 +37,7 @@ const tiktokStrategy = (req, res, next) => {
           userId,
           brandId,
           profile.username,
-          TikTokPlatform
+          type
         );
 
         if (response.success) {

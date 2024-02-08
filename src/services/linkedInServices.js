@@ -272,7 +272,6 @@ class LinkedInServices {
   }
   async shareVideo(data, creds, platform) {
     const accessToken = creds.access_token;
-    console.log("accessToken", accessToken);
     const VIDEO_URL =
       process.env.LINKEDIN_URL + "/videos?action=finalizeUpload";
     const owner =

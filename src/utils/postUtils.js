@@ -11,6 +11,7 @@ const { GBusinessSharePost } = require("./google-business/GoogleBusinessUtil");
 const UserService = require("../services/userServices");
 const userInterface = new UserService();
 const BrandServices = require("../services/brandsSevices");
+const { TiktokSharePost } = require("./tiktok/TikTokUtils");
 const brandServicesInterface = new BrandServices();
 
 const schedulePosts = async () => {
@@ -153,6 +154,19 @@ const publishPosts = async (data, userId, brandId) => {
           mediaType,
           userId,
           brandId
+        );
+        result.push({
+          status: response.success ? "Published" : "Error",
+          message: response.data,
+          platform: platform,
+        });
+      } else if (platform.includes("TikTok")) {
+        const response = await TiktokSharePost(
+          shareData,
+          mediaType,
+          userId,
+          brandId,
+          platform
         );
         result.push({
           status: response.success ? "Published" : "Error",

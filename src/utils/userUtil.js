@@ -1,4 +1,6 @@
 const SocialMediaToken = require("../models/SocialMediaToken");
+const UserService = require("../services/userServices");
+const userService = new UserService();
 
 const updateUserCreds = async (
   encryptedCreds,
@@ -12,14 +14,12 @@ const updateUserCreds = async (
       credentials: encryptedCreds,
       isConnected: isConnected,
     };
-    console.log(data);
 
     const condition = {
       userId,
       platform,
       brandId,
     };
-    console.log(condition);
     await SocialMediaToken.update(data, {
       where: condition,
     });
@@ -30,6 +30,22 @@ const updateUserCreds = async (
   }
 };
 
+const getUserCreds = async (userId, brandId, platform, isConnected = 1) => {
+  try {
+    const creds = await userService.getTokenByIdPlatform(
+      userId,
+      platform,
+      isConnected,
+      brandId
+    );
+
+    return creds;
+  } catch (err) {
+    return null;
+  }
+};
+
 module.exports = {
   updateUserCreds,
+  getUserCreds,
 };
