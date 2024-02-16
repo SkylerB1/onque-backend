@@ -18,7 +18,6 @@ const { GoogleBusinessPlatform, FacebookPagePlatform, LinkedInPlatform, LinkedIn
 const { tiktokStrategy } = require("../utils/tiktok");
 const { facebookStrategy, facebookloginStrategy } = require("../utils/facebook");
 const { REDIRECT_URL, LOGIN_REDIRECT_URL } = process.env;
-const jwt = require("jsonwebtoken");
 const { linkdInStrategy, linkdInProfileStrategy } = require("../utils/linkedin");
 
 router.get(

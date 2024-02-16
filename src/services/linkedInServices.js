@@ -2,7 +2,7 @@ const { default: axios } = require("axios");
 const SocialMediaToken = require("../models/SocialMediaToken");
 const { readFileSync, createReadStream } = require("fs");
 const path = require("path");
-const { encryptToken, decryptToken } = require("../middleware/encryptToken");
+const { encryptToken } = require("../middleware/encryptToken");
 const {
   LinkedInPlatform,
   LinkedInPagePlatform,
@@ -10,33 +10,22 @@ const {
 const { stringify } = require("querystring");
 const { response } = require("express");
 const fs = require("fs");
+const { exec } = require("child_process");
 
 class LinkedInServices {
   async setMediaToken(data, userId, brandId, platform, isConnected = 1) {
     try {
-      let credentials;
-      let screenName;
+      const { accessToken, refreshToken, vanityName, name = "" } = data;
+      let credentials = {
+        accessToken,
+        refreshToken,
+        vanityName,
+      };
+      const screenName = name;
       if (platform === LinkedInPlatform) {
-        screenName = data.name;
-        credentials = {
-          owner_id: data.id ?? "",
-          access_token: data?.access_token ?? "",
-          expires_in: data.expires_in ?? "",
-          refresh_token: data?.refresh_token ?? "",
-          refresh_token_expires_in: data.refresh_token_expires_in ?? "",
-          vanity_name: data.vanityName ?? "",
-        };
+        credentials.owner_id = data.id ?? "";
       } else {
-        screenName = data.name ?? "";
-        credentials = {
-          localized_name: data.name ?? "",
-          organization_id: data.id ?? "",
-          access_token: data?.access_token ?? "",
-          expires_in: data.expires_in ?? "",
-          refresh_token: data?.refresh_token ?? "",
-          refresh_token_expires_in: data.refresh_token_expires_in ?? "",
-          vanity_name: data.vanityName ?? "",
-        };
+        credentials.organization_id = data.id ?? "";
       }
       const encryptedCreds = encryptToken(credentials);
       const objData = {
@@ -87,15 +76,15 @@ class LinkedInServices {
     return data;
   }
 
-  async getLinkedInCreds(userId, platform) {
+  async getLinkedInCreds(userId, platform, brandId) {
     const condition = {
-      userId: userId,
-      platform: platform,
+      userId,
+      platform,
+      brandId,
     };
     const data = await SocialMediaToken.findOne({
       where: condition,
     });
-
 
     return data;
   }
@@ -112,9 +101,8 @@ class LinkedInServices {
     return data;
   }
 
-  async getLinkedInPages(data, access_token) {
+  async getLinkedInPages(data, accessToken) {
     const regex = /urn:li:organization:(\d+)/;
-    const accessToken = access_token;
     const pages = [];
     try {
       for (const item of data) {
@@ -271,72 +259,42 @@ class LinkedInServices {
     }
   }
   async shareVideo(data, creds, platform) {
-    const accessToken = creds.access_token;
+    const accessToken = creds.accessToken;
     const VIDEO_URL =
       process.env.LINKEDIN_URL + "/videos?action=finalizeUpload";
     const owner =
       platform === LinkedInPlatform
-        ? `urn:li:person:${creds.owner_id}`
+        ? `urn:li:person:${creds.id}`
         : `urn:li:organization:${creds.organization_id}`;
     const file = data?.files[0];
     const fileSize = file.size;
-    const filePath = path.join(__dirname, `../../assets/${file?.filename}`);
-    const captionfileName = Date.now() + ".srt";
-    const captionFilePath = path.join(
-      __dirname,
-      `../../assets/${captionfileName}`
-    );
+    const fileName = file?.filename;
+    const chunk = fileName.split(".").slice(0, 1).join() + "-part-";
+    const filePath = path.join(__dirname, `../../assets`);
     const captions = data.caption;
-    const isCaption = captions !== "" ? true : false;
 
-    var register = await this.registerVideo(
-      owner,
-      accessToken,
-      fileSize,
-      isCaption
-    );
+    var register = await this.registerVideo(owner, accessToken, fileSize);
 
     if (!register?.status) {
       return { status: false, data: register.data };
     }
 
-    const uploadUrls = register.data.value?.uploadInstructions;
-    const videoId = register.data.value?.video;
-
-    if (isCaption) {
-      const captionsUploadUrl = register.data.value.captionsUploadUrl;
-      await fs.promises.writeFile(captionFilePath, captions, (err) => {
-        if (err) {
-          console.error("Error writing file:", err);
-        } else {
-          console.log("SRT file created successfully:", captionFilePath);
-        }
-      });
-
-      const response = await this.uploadCaption(
-        captionsUploadUrl,
-        captionFilePath,
-        accessToken
-      );
-      console.log("CaptionResponse??", response);
-
-      if (!response.success) {
-        return { status: false, data: response.data };
-      }
-    }
+    const { value } = register.data;
+    const { video, uploadInstructions } = value;
 
     const uploadResponse = await this.uploadVideo(
-      uploadUrls,
+      uploadInstructions,
+      fileName,
       filePath,
-      accessToken
+      accessToken,
+      chunk
     );
-    console.log(uploadResponse.data);
 
     if (uploadResponse.status) {
       try {
         const requestBody = {
           finalizeUploadRequest: {
-            video: videoId,
+            video: video,
             uploadToken: "",
             uploadedPartIds: uploadResponse.data,
           },
@@ -344,13 +302,29 @@ class LinkedInServices {
         const response = await axios.post(VIDEO_URL, requestBody, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "LinkedIn-Version": "202308",
+            "LinkedIn-Version": "202401",
             "X-Restli-Protocol-Version": "2.0.0",
           },
         });
-        console.log("Video Status", response.status);
+        if (response.status === 200) {
+          const content = {
+            media: {
+              id: video,
+            },
+          };
+          const createPostResponse = await this.createPost(
+            owner,
+            captions,
+            content,
+            accessToken
+          );
+          if (createPostResponse.status === 201) {
+            await this.removeChunks(filePath, chunk);
+            
+          }
 
-        return { status: true, data: videoId };
+          return response;
+        }
       } catch (err) {
         return { status: false, data: err };
       }
@@ -360,11 +334,10 @@ class LinkedInServices {
   }
 
   async shareImage(data, creds, platform) {
-    const SHARE_URL = process.env.LINKEDIN_SHARE_URL;
-    const accessToken = creds.access_token;
+    const accessToken = creds.accessToken;
     const owner =
       platform === LinkedInPlatform
-        ? `urn:li:person:${creds.owner_id}`
+        ? `urn:li:person:${creds.id}`
         : `urn:li:organization:${creds.organization_id}`;
 
     const media = [];
@@ -372,7 +345,6 @@ class LinkedInServices {
 
     for (const file of data.files) {
       const register = await this.registerImage(owner, accessToken);
-      console.log(register);
       if (!register?.status) {
         return { status: false, data: register.data };
       }
@@ -405,31 +377,50 @@ class LinkedInServices {
         media: media[0],
       };
     }
-    const requestBody = {
-      author: owner,
-      commentary: data?.caption,
-      visibility: "PUBLIC",
-      distribution: {
-        feedDistribution: "MAIN_FEED",
-        targetEntities: [],
-        thirdPartyDistributionChannels: [],
-      },
-      content: content,
-      lifecycleState: "PUBLISHED",
-      isReshareDisabledByAuthor: false,
-    };
+    const response = await this.createPost(
+      owner,
+      captions,
+      content,
+      accessToken
+    );
 
+    return response;
+  }
+
+  async createPost(owner, caption = "", content, accessToken) {
     try {
-      const response = await axios.post(SHARE_URL, requestBody, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "LinkedIn-Version": "202308",
+      const SHARE_URL = process.env.LINKEDIN_SHARE_URL;
+      const requestBody = {
+        author: owner,
+        commentary: caption,
+        visibility: "PUBLIC",
+        distribution: {
+          feedDistribution: "MAIN_FEED",
+          targetEntities: [],
+          thirdPartyDistributionChannels: [],
         },
-      });
-      return { status: true, data: response.headers["x-linkedin-id"] };
-    } catch (err) {
-      return { status: false, data: err };
-    }
+        content: content,
+        lifecycleState: "PUBLISHED",
+        isReshareDisabledByAuthor: false,
+      };
+
+      try {
+        const response = await axios.post(SHARE_URL, requestBody, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+            "LinkedIn-Version": "202401",
+          },
+        });
+        return {
+          success: true,
+          status: response.status,
+          data: response.headers["x-linkedin-id"],
+        };
+      } catch (err) {
+        return { success: false, status: err.response.status, data: err };
+      }
+    } catch (err) {}
   }
 
   async registerImage(owner, accessToken) {
@@ -457,13 +448,13 @@ class LinkedInServices {
     }
   }
 
-  async registerVideo(owner, accessToken, fileSize, isCaption) {
+  async registerVideo(owner, accessToken, fileSize) {
     const URL = process.env.LINKEDIN_REGISTER_VIDEO_URL;
     const requestBody = {
       initializeUploadRequest: {
         owner: owner,
         fileSizeBytes: fileSize,
-        uploadCaptions: isCaption,
+        uploadCaptions: false,
         uploadThumbnail: false,
       },
     };
@@ -502,34 +493,104 @@ class LinkedInServices {
       };
     }
   }
-  async uploadVideo(uploadUrls, filePath, accessToken) {
-    const etags = [];
-    for (const info of uploadUrls) {
-      const fileStream = createReadStream(filePath, {
-        encoding: "binary",
-        start: info.firstByte,
-        end: info.lastByte,
-      });
 
-      try {
-        const response = await axios.post(info.uploadUrl, fileStream, {
+  async removeChunks(filePath, chunk) {
+    const promise = new Promise(function (resolve, reject) {
+      exec(`rm -r ${filePath}/${chunk}*`, (err, stdout, stderr) => {
+        if (err) {
+          reject("removeTmpDir: promise rejected");
+        } else {
+          // console.log(`stdout: ${stdout}`);
+          // console.log(`stderr: ${stderr}`);
+          return resolve();
+        }
+      });
+    });
+    return promise;
+  }
+
+  async splitVideo(fileName, chunk, filePath) {
+    const promise = new Promise(function (resolve, reject) {
+      exec(
+        `cd ${filePath} && split -b 4194303 ./${fileName} ${chunk}`,
+        (err, stdout, stderr) => {
+          if (err) {
+            console.error(err);
+            reject("splitVideo: promise rejected");
+          } else {
+            // console.log(`stdout: ${stdout}`);
+            // console.log(`stderr: ${stderr}`);
+            return resolve();
+          }
+        }
+      );
+    });
+    return promise;
+  }
+  async getFilesArray(filePath, chunk) {
+    var filesArray = [];
+    const tmpPartPath = filePath;
+    const regex = `/${chunk}/g`;
+    const files = fs
+      .readdirSync(tmpPartPath)
+      .filter((elm) => elm.startsWith(chunk));
+    files.forEach((file, index) => {
+      filesArray.push(tmpPartPath + "/" + file);
+    });
+    return filesArray;
+  }
+
+  async uploadParts(files, parts, accessToken) {
+    var axiosRequests = [];
+    parts.forEach((part, index) => {
+      const readFile = fs.readFileSync(files[index]);
+      axiosRequests.push(
+        axios({
+          method: "put",
+          url: part.uploadUrl,
+          data: readFile,
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "LinkedIn-Version": "202308",
             "Content-Type": "application/octet-stream",
+            "LinkedIn-Version": "202401",
+            "X-Restli-Protocol-Version": "2.0.0",
           },
+        })
+      );
+    });
+    return axios.all(axiosRequests).then(
+      axios.spread((...responses) => {
+        var axiosReponses = [];
+        responses.forEach((response) => {
+          if (response.status === 200) {
+            axiosReponses.push(response);
+          } else {
+            console.log(response);
+          }
         });
-        console.log(response.headers.etag);
-        etags.push(response.headers.etag);
-      } catch (err) {
-        console.log("UploadVideo Error", err.response);
-        return {
-          status: false,
-          data: err,
-        };
-      }
-    }
-    console.log(etags);
+        return axiosReponses;
+      })
+    );
+  }
+
+  async getEtags(responses) {
+    const etags = [];
+    responses.forEach((response) => {
+      etags.push(response.headers.etag);
+    });
+    return etags;
+  }
+  async uploadVideo(uploadUrls, fileName, filePath, accessToken, chunk) {
+
+    await this.splitVideo(fileName, chunk, filePath);
+    const files = await this.getFilesArray(filePath, chunk);
+    const uploadResponse = await this.uploadParts(
+      files,
+      uploadUrls,
+      accessToken
+    );
+    const etags = await this.getEtags(uploadResponse);
+
     return { status: true, data: etags };
   }
 
@@ -557,7 +618,7 @@ class LinkedInServices {
       const response = await axios.post(captionsUploadUrl, formData, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "LinkedIn-Version": "202308",
+          "LinkedIn-Version": "202401",
           "Content-Type": "multipart/form-data",
         },
       });

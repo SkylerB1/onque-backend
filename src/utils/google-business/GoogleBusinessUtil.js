@@ -7,8 +7,12 @@ const { GoogleBusinessPlatform } = require("../CommonString");
 const { encryptToken } = require("../../middleware/encryptToken");
 const { updateUserCreds } = require("../userUtil");
 const { default: axios } = require("axios");
-const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, YOUTUBE_CALLBACK_URL } =
-  process.env;
+const {
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  YOUTUBE_CALLBACK_URL,
+  FILE_URL,
+} = process.env;
 
 const oAuth2Client = new google.auth.OAuth2(
   GOOGLE_CLIENT_ID,
@@ -33,6 +37,7 @@ const GBusinessSharePost = async (data, mediaType, userId, brandId) => {
       return { status: 400, data: "Max 1 image allowed", success: false };
     }
     const file = files[0];
+    const sourceUrl = FILE_URL + file;
     if (file?.mimetype?.includes("video")) {
       return {
         status: 400,
@@ -80,8 +85,9 @@ const GBusinessSharePost = async (data, mediaType, userId, brandId) => {
     if (file) {
       media.push({
         mediaFormat: "PHOTO",
-        sourceUrl:
-          "https://api.jjmedia.appwrk.com/assets/files-1706085350825.png",
+        sourceUrl: sourceUrl,
+        // sourceUrl:
+        //   "https://api.jjmedia.appwrk.com/assets/files-1706085350825.png",
       });
       postData.media = media;
     }
@@ -96,7 +102,6 @@ const GBusinessSharePost = async (data, mediaType, userId, brandId) => {
           },
         }
       );
-
       return { success: true, data: res.data.name };
     } catch (err) {
       console.log(err);
@@ -257,6 +262,7 @@ const GetBusinessLocations = async (userId, brandId) => {
 
 const SetBusinessLocation = async (userId, data, brandId) => {
   try {
+    const { name = "" } = data;
     const creds = await userService.getTokenByIdPlatform(
       userId,
       GoogleBusinessPlatform,
@@ -272,7 +278,8 @@ const SetBusinessLocation = async (userId, data, brandId) => {
       userId,
       GoogleBusinessPlatform,
       1,
-      brandId
+      brandId,
+      name
     );
     if (updatedCredResponse) {
       return { success: true };

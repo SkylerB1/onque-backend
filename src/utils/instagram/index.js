@@ -8,7 +8,7 @@ const DEFAULT_GRAPH_API_VERSION = "v18.0";
 const GRAPH_API_BASE_URL =
   (FACEBOOK_URL ?? DEFAULT_GRAPH_API_ORIGIN) +
   "/" +
-  (GRAPH_API_VERSION ? GRAPH_API_VERSION + "/" : DEFAULT_GRAPH_API_VERSION);
+  (GRAPH_API_VERSION ? GRAPH_API_VERSION : DEFAULT_GRAPH_API_VERSION);
 
 /**
  * Setting retries with 3 seconds delay, as async video upload may take a while in the backed to return success

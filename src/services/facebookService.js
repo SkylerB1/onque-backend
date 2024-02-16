@@ -13,28 +13,26 @@ const {
 } = require("../utils/facebook/FacebookUtilFunctions");
 const { buildAPIURL, isReelUploadSuccessful } = require("../utils/instagram");
 const Users = require("../models/Users");
-;
 const UserService = require("../services/userServices");
 const userInterface = new UserService();
 const BrandServices = require("../services/brandsSevices");
 const brandServicesInterface = new BrandServices();
 
 class FacebookService {
-
   async saveLoginFacebookDetails(creds) {
     const existingUser = await Users.findOne({
       where: {
-        email: creds?.email
-      }
+        email: creds?.email,
+      },
     });
 
-    const nameArray = creds.name.split(' ');
+    const nameArray = creds.name.split(" ");
     if (existingUser) {
       return existingUser;
     } else {
       const data = await userInterface.createUser({
         firstName: nameArray[0] || "",
-        lastName: nameArray.slice(1).join(' ') || "",
+        lastName: nameArray.slice(1).join(" ") || "",
         email: creds.email,
         password: "",
       });
@@ -45,7 +43,14 @@ class FacebookService {
     }
   }
 
-  async setConnection(brandId, data, userId, platform, isConnected = 1, screenName) {
+  async setConnection(
+    brandId,
+    data,
+    userId,
+    platform,
+    isConnected = 1,
+    screenName
+  ) {
     try {
       const encryptedCreds = encryptToken(data);
       const storeData = {
@@ -184,7 +189,6 @@ class FacebookService {
             data: err.response.data,
           };
         }
-
       } else {
         return { success: false, data: reelUploadResponse.data };
       }
@@ -352,7 +356,7 @@ class FacebookService {
 
   async getFacebookPages(userId, access_token) {
     const PAGES_URL = `https://graph.facebook.com/v18.0/${userId}/accounts?access_token=${access_token}`;
-    const pages = []
+    const pages = [];
     try {
       const response = await this.collectAllPages(PAGES_URL);
       const { data } = response;

@@ -21,7 +21,7 @@ const youtube = google.youtube({
   auth: oAuth2Client,
 });
 
-const YoutubeShareVideo = async (data, platform, userId) => {
+const YoutubeShareVideo = async (data, platform, userId, brandId) => {
   const { files, caption, additionalPresets } = data;
   const { title, category, visibility, madeForKids } = additionalPresets;
 
@@ -30,7 +30,12 @@ const YoutubeShareVideo = async (data, platform, userId) => {
   }
 
   try {
-    const creds = await userService.getTokenByIdPlatform(userId, platform);
+    const creds = await userService.getTokenByIdPlatform(
+      userId,
+      platform,
+      1,
+      brandId
+    );
     const { accessToken, refreshToken } = creds;
 
     oAuth2Client.setCredentials({
@@ -52,7 +57,7 @@ const YoutubeShareVideo = async (data, platform, userId) => {
       },
       status: {
         privacyStatus: visibility,
-        madeForKids: madeForKids,
+        selfDeclaredMadeForKids: madeForKids,
       },
     };
 
@@ -64,7 +69,6 @@ const YoutubeShareVideo = async (data, platform, userId) => {
           body: fs.createReadStream(videoPath),
         },
       });
-      console.log(res);
       return { success: true, data: res.data.id };
     } catch (err) {
       console.log(err);
@@ -76,11 +80,13 @@ const YoutubeShareVideo = async (data, platform, userId) => {
   }
 };
 
-const YoutubeCategories = async (userId) => {
+const YoutubeCategories = async (userId, brandId) => {
   try {
     const creds = await userService.getTokenByIdPlatform(
       userId,
-      YouTubePlatform
+      YouTubePlatform,
+      1,
+      brandId
     );
     const { accessToken, refreshToken } = creds;
     oAuth2Client.setCredentials({
@@ -102,7 +108,7 @@ const YoutubeCategories = async (userId) => {
   }
 };
 
-const CheckYoutubeToken = async (creds, userId) => {
+const CheckYoutubeToken = async (creds, userId, brandId) => {
   let { accessToken, refreshToken, ...rest } = creds;
   try {
     await oAuth2Client.getTokenInfo(accessToken);
@@ -122,7 +128,9 @@ const CheckYoutubeToken = async (creds, userId) => {
       const res = await updateUserCreds(
         encryptedCreds,
         userId,
-        YouTubePlatform
+        YouTubePlatform,
+        1,
+        brandId
       );
       console.log("Creds Update?", res);
 

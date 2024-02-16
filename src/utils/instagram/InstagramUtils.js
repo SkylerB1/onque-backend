@@ -4,14 +4,25 @@ const InstagramService = require("../../services/InstagramService");
 const instagramService = new InstagramService();
 const userService = new UserService();
 
-const InstagramSharePost = async (data, platformType, mediaType, userId, brandId) => {
+const InstagramSharePost = async (
+  data,
+  platformType,
+  mediaType,
+  userId,
+  brandId
+) => {
   try {
     const mimetype = data.files[0]?.mimetype ?? null;
     const isVideo = mimetype?.includes("video") ?? false;
     const isPhoto = mimetype?.includes("image") ?? false;
     const platform = platformType;
 
-    const creds = await userService.getTokenByIdPlatform(userId, brandId, platform);
+    const creds = await userService.getTokenByIdPlatform(
+      userId,
+      platform,
+      1,
+      brandId
+    );
     const user_id = creds.id;
     const access_token = creds.access_token;
     //   const currentTimestamp = moment();

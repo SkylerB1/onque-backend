@@ -7,13 +7,17 @@ const updateUserCreds = async (
   userId,
   platform,
   isConnected = 1,
-  brandId
+  brandId,
+  screenName
 ) => {
   try {
     const data = {
       credentials: encryptedCreds,
       isConnected: isConnected,
     };
+    if (screenName) {
+      data.screenName = screenName;
+    }
 
     const condition = {
       userId,

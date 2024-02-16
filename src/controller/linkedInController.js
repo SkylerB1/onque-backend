@@ -46,7 +46,13 @@ const linkedInPages = async (req, res) => {
     );
 
     const [tokenResponse, pageData] = await Promise.all([
-      await service.setMediaToken(creds, userId, brandId, LinkedInPagePlatform),
+      await service.setMediaToken(
+        creds,
+        userId,
+        brandId,
+        LinkedInPagePlatform,
+        0
+      ),
       await service.getLinkedInPageIds(creds?.accessToken),
     ]);
 
@@ -58,7 +64,6 @@ const linkedInPages = async (req, res) => {
 
       return res.status(pages.status).json(pages.data);
     } else {
-
       return res.status(pageData.status).json(pageData.data);
     }
   } catch (err) {
@@ -69,15 +74,15 @@ const linkedInConnect = async (req, res) => {
   try {
     const data = req?.body;
     const userId = req.user?.id;
-    const brandId = req.query.brandId;
-    const platform = req.query.type === "page" ? LinkedInPagePlatform : LinkedInPlatform;
+    const { type, brandId } = req.query;
+    const platform = type === "page" ? LinkedInPagePlatform : LinkedInPlatform;
 
-    const userConnection = await service.getLinkedInCreds(userId, platform);
+    const userConnection = await service.getLinkedInCreds(userId, LinkedInPlatform,brandId);
 
     const creds = decryptToken(userConnection.credentials);
 
     const response = await service.setMediaToken(
-      { ...data, ...creds },
+      { ...creds, ...data },
       userId,
       brandId,
       platform
@@ -109,7 +114,12 @@ const sharePost = async (req, res) => {
     const platform =
       req.query.type === "page" ? LinkedInPagePlatform : LinkedInPlatform;
 
-    const creds = await userService.getTokenByIdPlatform(userId, platform);
+    const creds = await userService.getTokenByIdPlatform(
+      userId,
+      platform,
+      1,
+      brandId
+    );
     let response;
     if (data.files && !isVideo) {
       response = await service.shareImage(data, creds, platform);
