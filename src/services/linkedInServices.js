@@ -320,7 +320,6 @@ class LinkedInServices {
           );
           if (createPostResponse.status === 201) {
             await this.removeChunks(filePath, chunk);
-            
           }
 
           return response;
@@ -341,6 +340,7 @@ class LinkedInServices {
         : `urn:li:organization:${creds.organization_id}`;
 
     const media = [];
+    const caption = data?.caption ?? "";
     let content;
 
     for (const file of data.files) {
@@ -379,7 +379,7 @@ class LinkedInServices {
     }
     const response = await this.createPost(
       owner,
-      captions,
+      caption,
       content,
       accessToken
     );
@@ -581,7 +581,6 @@ class LinkedInServices {
     return etags;
   }
   async uploadVideo(uploadUrls, fileName, filePath, accessToken, chunk) {
-
     await this.splitVideo(fileName, chunk, filePath);
     const files = await this.getFilesArray(filePath, chunk);
     const uploadResponse = await this.uploadParts(

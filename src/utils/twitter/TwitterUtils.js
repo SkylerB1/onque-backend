@@ -16,7 +16,12 @@ const TwitterSharePost = async (data, platform, userId, brandId) => {
 
   try {
     const { caption, files } = data;
-    const creds = await userService.getTokenByIdPlatform(userId, brandId, platform);
+    const creds = await userService.getTokenByIdPlatform(
+      userId,
+      platform,
+      1,
+      brandId
+    );
 
     const { token, tokenSecret } = creds;
 
@@ -81,7 +86,7 @@ const TwitterSharePost = async (data, platform, userId, brandId) => {
   }
 };
 
-const twitterLogin = async (encryptedCreds, username,) => {
+const twitterLogin = async (encryptedCreds, username) => {
   const existingUser = await userInterface.findUserByName(username);
 
   if (existingUser) {
@@ -98,7 +103,7 @@ const twitterLogin = async (encryptedCreds, username,) => {
     await brandServicesInterface.createBrand(brand_name, user_id);
     return data;
   }
-}
+};
 
 module.exports = {
   TwitterSharePost,
