@@ -102,7 +102,7 @@ class InstagramService {
       let media;
       if (mimeType.includes("image")) {
         // const file_url =
-        //   "https://api.jjmedia.appwrk.com/assets/files-1702553497734.jpg";
+        //   "https://fastly.picsum.photos/id/237/200/300.jpg?hmac=TmmQSbShHz9CdQm0NkEjx1Dyh_Y984R9LpNrpvH2D_U";
         media = {
           image_url: file_url,
         };
@@ -131,7 +131,7 @@ class InstagramService {
           response = await this.publishMedia(id, userId, accessToken);
         }
       } catch (err) {
-        console.log(err);
+        console.log(JSON.stringify(err.response.data));
       }
     } else {
       response = await this.carouselPost(files, userId, caption, accessToken);

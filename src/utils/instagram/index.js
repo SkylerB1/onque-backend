@@ -2,12 +2,11 @@ const { default: axios } = require("axios");
 
 const { GRAPH_API_VERSION, FACEBOOK_URL } = process.env;
 
-const DEFAULT_GRAPH_API_ORIGIN = "https://graph.facebook.com";
+const DEFAULT_GRAPH_API_ORIGIN = "https://graph.facebook.com/";
 const DEFAULT_GRAPH_API_VERSION = "v18.0";
 
 const GRAPH_API_BASE_URL =
   (FACEBOOK_URL ?? DEFAULT_GRAPH_API_ORIGIN) +
-  "/" +
   (GRAPH_API_VERSION ? GRAPH_API_VERSION : DEFAULT_GRAPH_API_VERSION);
 
 /**
