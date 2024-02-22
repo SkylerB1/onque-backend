@@ -25,11 +25,16 @@ const tiktokStrategy = (req, res, next) => {
         scope: ["user.info.basic", "video.publish", "video.upload"],
         callbackURL: TIKTOK_CALLBACK_URL,
       },
-      async (token, tokenSecret, profile, cb) => {
+      async (token, tokenSecret, params, profile, cb) => {
         const creds = {
           token,
           tokenSecret,
-          ...profile._json,
+          ...params,
+          access_token_expiration_time:
+            new Date().getTime() + params.expires_in * 1000,
+          refresh_token_expiration_time:
+            new Date().getTime() + params.refresh_expires_in * 1000,
+          ...profile._json.data.user,
         };
         const encryptedCreds = encryptToken(creds);
         const response = await saveConnection(

@@ -243,8 +243,8 @@ class FacebookService {
         for (let file of files) {
           const unPublishedData = {
             published: false,
-            url: process.env.FILE_URL + file.filename,
-            // url: "https://fastly.picsum.photos/id/237/200/300.jpg?hmac=TmmQSbShHz9CdQm0NkEjx1Dyh_Y984R9LpNrpvH2D_U",
+            // url: process.env.FILE_URL + file.filename,
+            url: "https://fastly.picsum.photos/id/237/200/300.jpg?hmac=TmmQSbShHz9CdQm0NkEjx1Dyh_Y984R9LpNrpvH2D_U",
           };
           const response = await this.upload(sharePhotoUri, unPublishedData);
           if (response.status === 200) {
@@ -268,9 +268,9 @@ class FacebookService {
           }
         }
       } else if (files.length === 1) {
-        const file_url = process.env.FILE_URL + files[0]?.filename;
-        // const file_url =
-        //   "https://fastly.picsum.photos/id/237/200/300.jpg?hmac=TmmQSbShHz9CdQm0NkEjx1Dyh_Y984R9LpNrpvH2D_U";
+        // const file_url = process.env.FILE_URL + files[0]?.filename;
+        const file_url =
+          "https://fastly.picsum.photos/id/237/200/300.jpg?hmac=TmmQSbShHz9CdQm0NkEjx1Dyh_Y984R9LpNrpvH2D_U";
         SHARE_DATA.url = file_url;
 
         return await this.upload(sharePhotoUri, SHARE_DATA);
@@ -306,26 +306,22 @@ class FacebookService {
     try {
       const ACCOUNT_URL =
         process.env.FACEBOOK_URL +
-        `${pageId}?fields=instagram_business_account&access_token=${accessToken}`;
+        `/${pageId}?fields=instagram_business_account&access_token=${accessToken}`;
 
       const account = await axios.get(ACCOUNT_URL);
       const isInstaAccount = account.data.instagram_business_account ?? null;
 
       if (account.status === 200 && isInstaAccount) {
-        if (isInstaAccount) {
-          const PROFILE_URL =
-            process.env.FACEBOOK_URL +
-            `${isInstaAccount.id}?fields=id,username,profile_picture_url&access_token=${accessToken}`;
+        const PROFILE_URL =
+          process.env.FACEBOOK_URL +
+          `/${isInstaAccount.id}?fields=id,username,profile_picture_url&access_token=${accessToken}`;
 
-          const profile = await axios.get(PROFILE_URL);
+        const profile = await axios.get(PROFILE_URL);
 
-          if (profile.status === 200) {
-            return { success: true, data: profile.data };
-          } else {
-            return { success: false, data: profile.data };
-          }
+        if (profile.status === 200) {
+          return { success: true, data: profile.data };
         } else {
-          return { success: true, data: null };
+          return { success: false, data: profile.data };
         }
       } else {
         return { success: false, data: isInstaAccount };

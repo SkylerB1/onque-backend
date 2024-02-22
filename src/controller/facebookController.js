@@ -21,10 +21,7 @@ const facebookPages = async (req, res) => {
 
     let response = [];
 
-    const pageData = await facebookService.getFacebookPages(
-      id,
-      accessToken
-    );
+    const pageData = await facebookService.getFacebookPages(id, accessToken);
     if (pageData.success) {
       for (let page of pageData.data) {
         await facebookService.setConnection(
@@ -36,12 +33,10 @@ const facebookPages = async (req, res) => {
           page.name
         );
 
-
         const instaAccount = await facebookService.getInstagramAccount(
           page.id,
           page.access_token
         );
-
 
         if (instaAccount.data) {
           const data = {
@@ -69,7 +64,6 @@ const facebookPages = async (req, res) => {
     console.log(err);
   }
 };
-
 
 const facebookConnect = async (req, res) => {
   try {

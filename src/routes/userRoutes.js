@@ -4,7 +4,8 @@ const UserController = require("../controller/userController");
 const TiktokController = require("../controller/tiktokController");
 const {verifyToken} = require("../middleware/auth.middleware");
 const { registerSchema, loginSchema } = require("../utils/schema/schema");
-const { ValidationSource, validator } = require("../utils/validator")
+const { ValidationSource, validator } = require("../utils/validator");
+const { verifyTiktokToken } = require("../utils/tiktok/TikTokUtils");
 
 router.post('/register', validator(registerSchema.register, ValidationSource.BODY) ,UserController.register)
 router.post('/login', validator(loginSchema.login, ValidationSource.BODY), UserController.logInUser)
@@ -18,5 +19,9 @@ router.post("/scheduler/posts/:id",verifyToken,UserController.schedulePosts);
 router.patch('/deletePost', UserController.deletePostData)
 router.delete('/delete/client/:id', UserController.delete)
 router.delete('/logout/socialMedia/:id', UserController.logoutSocialMedia)
-router.get('/tiktok/creator-info',verifyToken ,TiktokController.getTiktokCreatorInfo)
+router.get(
+  "/tiktok/creator-info",
+  verifyToken,
+  verifyTiktokToken,TiktokController.getTiktokCreatorInfo
+);
 module.exports = router;

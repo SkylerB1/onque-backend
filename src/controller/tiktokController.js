@@ -13,7 +13,11 @@ const getTiktokCreatorInfo = async (req, res) => {
       if (creds) {
         const { token } = creds;
         const infoRespone = await getCreatorInfo(token);
-        res.status(200).json(infoRespone);
+        if (infoRespone) {
+          res.status(200).json(infoRespone);
+        } else {
+          res.status(400).json({ msg: "Failed to get user info" });
+        }
       } else {
         res.status(400).json({ msg: "Failed to fetch user creds" });
       }
