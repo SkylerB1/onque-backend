@@ -25,7 +25,7 @@ const TiktokSharePost = async (data, mediaType, userId, brandId, platform) => {
   const media = [];
 
   files.forEach((file) => {
-    media.push(`${FILE_URL}files-1707301683072.mp4`);
+    media.push(`${FILE_URL}${file.filename}`);
   });
 
   let res;
