@@ -75,9 +75,14 @@ const linkedInConnect = async (req, res) => {
     const data = req?.body;
     const userId = req.user?.id;
     const { type, brandId } = req.query;
+    console.log({ type, brandId });
     const platform = type === "page" ? LinkedInPagePlatform : LinkedInPlatform;
 
-    const userConnection = await service.getLinkedInCreds(userId, LinkedInPlatform,brandId);
+    const userConnection = await service.getLinkedInCreds(
+      userId,
+      platform,
+      brandId
+    );
 
     const creds = decryptToken(userConnection.credentials);
 
@@ -100,7 +105,7 @@ const linkedInConnect = async (req, res) => {
   } catch (err) {
     console.log(err);
     return res
-      .status(err.response.status ?? 400)
+      .status(err?.response?.status ?? 400)
       .json(err.response.data ?? err);
   }
 };
