@@ -45,6 +45,12 @@ const schedulePosts = async () => {
 
 const createPost = async (userId, brandId, data, status) => {
   const { caption, files, providers, scheduledDate } = data;
+  const isPublished = status?.some((item) => item.status === "Published");
+  const publishStatus = status
+    ? isPublished
+      ? "Published"
+      : "Error"
+    : "Pending";
 
   const postData = {
     userId: userId,
@@ -67,7 +73,7 @@ const createPost = async (userId, brandId, data, status) => {
           status: "Pending",
         };
       }),
-    status: status ? "Published" : "Pending",
+    status: publishStatus,
     scheduledDate: scheduledDate,
   };
   try {
@@ -130,7 +136,12 @@ const publishPosts = async (data, userId, brandId) => {
           platform: platform,
         });
       } else if (platform.includes("Twitter")) {
-        const response = await TwitterSharePost(shareData, platform, userId, brandId);
+        const response = await TwitterSharePost(
+          shareData,
+          platform,
+          userId,
+          brandId
+        );
         result.push({
           status: response.success ? "Published" : "Error",
           message: response.data,
@@ -279,8 +290,6 @@ const saveConnection = async (
     return { success: false, data: err };
   }
 };
-
-
 
 module.exports = {
   schedulePosts,
