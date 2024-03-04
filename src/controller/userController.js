@@ -5,7 +5,7 @@ const moment = require("moment");
 const jwt = require("jsonwebtoken");
 var request = require("request");
 const mailer = require("@sendgrid/mail");
-const { createPost, publishPosts } = require("../utils/postUtils");
+const { createPost, publishPosts, updatePost } = require("../utils/postUtils");
 const BrandServices = require("../services/brandsSevices");
 const { createToken } = require("../middleware/auth.middleware");
 const brandServicesInterface = new BrandServices();
@@ -180,15 +180,14 @@ method.sendEmail = async (req, res) => {
     } else {
       res.status(400).json({ message: "Please enter a valid email address!" });
     }
-  } catch (error) { }
+  } catch (error) {}
 };
-
 
 method.getUserInfo = async (req, res) => {
   try {
     const userId = req.user?.id;
     const data = await userInterface.userData(userId);
-    const { accessToken, refreshToken } = createToken(userId)
+    const { accessToken, refreshToken } = createToken(userId);
     res.status(200).json({
       id: data.id,
       firstName: data.firstName,
@@ -197,11 +196,10 @@ method.getUserInfo = async (req, res) => {
       access_token: accessToken,
       refresh_token: refreshToken,
     });
-
   } catch (error) {
     res.status(400).json({ message: "No data found" });
   }
-}
+};
 
 /**
  *
@@ -236,7 +234,7 @@ method.forgotPassword = async (req, res) => {
         });
       }
     }
-  } catch (error) { }
+  } catch (error) {}
 };
 
 method.getPostData = async (req, res) => {
@@ -313,7 +311,7 @@ method.logoutSocialMedia = async (req, res) => {
 method.delete = async (req, res) => {
   try {
     const brandId = req.params.id;
-    const response = await userInterface.deleteClient(brandId)
+    const response = await userInterface.deleteClient(brandId);
     res.status(200).json({
       message: "Delete successfully",
     });
@@ -323,7 +321,7 @@ method.delete = async (req, res) => {
       error: err.message,
     });
   }
-}
+};
 
 method.userConnections = async (req, res) => {
   const userId = req.user?.id;
@@ -359,7 +357,7 @@ method.userBrand = async (req, res) => {
 method.schedulePosts = async (req, res) => {
   const userId = req.user?.id;
   const data = req.body;
-  const brandId = req?.params?.id;
+  const { brandId } = req?.query;
   const { providers, scheduledDate } = data;
   const canPublish = moment(scheduledDate).isSameOrBefore(moment());
 
@@ -372,6 +370,23 @@ method.schedulePosts = async (req, res) => {
       }
     }
     const response = await createPost(userId, brandId, data, postStatus?.data);
+    if (response.success) {
+      return res.status(200).json(response.data);
+    } else {
+      return res.status(400).json(response.data);
+    }
+  } else {
+    return res.status(400).json({ msg: "No selected platform" });
+  }
+};
+
+method.editScheduledPost = async (req, res) => {
+  const data = req.body;
+  const postId = req.params?.id;
+  const { providers } = data;
+
+  if (providers.length > 0) {
+    const response = await updatePost(postId, data);
     if (response.success) {
       return res.status(200).json(response.data);
     } else {

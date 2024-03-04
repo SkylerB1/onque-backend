@@ -84,6 +84,24 @@ const createPost = async (userId, brandId, data, status) => {
   }
 };
 
+const updatePost = async (id, data) => {
+  const { caption, files, providers, scheduledDate } = data;
+
+  const postData = {
+    text: caption,
+    files: files,
+    platform: providers,
+    scheduledDate: scheduledDate,
+  };
+  try {
+    const post = await Posts.update(postData, { where: { id } });
+    return { success: true, data: post };
+  } catch (err) {
+    console.log(err);
+    return { success: false, data: err };
+  }
+};
+
 const publishPosts = async (data, userId, brandId) => {
   const { providers, caption, files } = data;
   const result = [];
@@ -294,6 +312,7 @@ const saveConnection = async (
 module.exports = {
   schedulePosts,
   createPost,
+  updatePost,
   publishPosts,
   getOngoingPosts,
   saveConnection,
