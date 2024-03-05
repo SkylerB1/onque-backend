@@ -17,6 +17,7 @@ router.get("/brand", verifyToken, UserController.userBrand)
 router.get('/getPostData/:id', verifyToken, UserController.getPostData)
 router.post("/scheduler/posts", verifyToken, UserController.schedulePosts);
 router.put("/update/post/:id", verifyToken, UserController.editScheduledPost);
+router.delete("/delete/post/:id", verifyToken, UserController.deleteScheduledPost);
 router.patch('/deletePost', UserController.deletePostData)
 router.delete('/delete/client/:id', UserController.delete)
 router.delete('/logout/socialMedia/:id', UserController.logoutSocialMedia)

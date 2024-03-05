@@ -5,7 +5,12 @@ const moment = require("moment");
 const jwt = require("jsonwebtoken");
 var request = require("request");
 const mailer = require("@sendgrid/mail");
-const { createPost, publishPosts, updatePost } = require("../utils/postUtils");
+const {
+  createPost,
+  publishPosts,
+  updatePost,
+  deletePost,
+} = require("../utils/postUtils");
 const BrandServices = require("../services/brandsSevices");
 const { createToken } = require("../middleware/auth.middleware");
 const brandServicesInterface = new BrandServices();
@@ -394,6 +399,18 @@ method.editScheduledPost = async (req, res) => {
     }
   } else {
     return res.status(400).json({ msg: "No selected platform" });
+  }
+};
+
+method.deleteScheduledPost = async (req, res) => {
+  const postId = req.params?.id;
+
+  const response = await deletePost(postId);
+  console.log(response);
+  if (response.success) {
+    return res.status(204).end();
+  } else {
+    return res.status(400).json(response.data);
   }
 };
 

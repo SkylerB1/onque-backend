@@ -102,6 +102,17 @@ const updatePost = async (id, data) => {
   }
 };
 
+const deletePost = async (id) => {
+  try {
+    const post = await Posts.destroy({
+      where: { id },
+    });
+    return { success: true, data: post };
+  } catch (err) {
+    return { success: false, data: err };
+  }
+};
+
 const publishPosts = async (data, userId, brandId) => {
   const { providers, caption, files } = data;
   const result = [];
@@ -313,6 +324,7 @@ module.exports = {
   schedulePosts,
   createPost,
   updatePost,
+  deletePost,
   publishPosts,
   getOngoingPosts,
   saveConnection,
