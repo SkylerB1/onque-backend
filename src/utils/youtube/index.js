@@ -23,10 +23,11 @@ const youtubeStrategy = async (req, res, next) => {
         ],
         accessType: "offline",
       },
-      async function (accessToken, refreshToken, profile, cb) {
+      async function (accessToken, refreshToken, params, profile, cb) {
         const creds = {
           accessToken,
           refreshToken,
+          expiry_date: new Date().getTime() + params.expires_in * 1000,
           ...profile._json,
         };
         const encryptedCreds = encryptToken(creds);

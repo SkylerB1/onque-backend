@@ -4,7 +4,7 @@ const FacebookStrategy = require('passport-facebook').Strategy;
 const FacebookService = require('../../services/facebookService');
 const { encryptToken } = require("../../middleware/encryptToken");
 const facebookService = new FacebookService();
-const { FacebookPagePlatform } = require("../CommonString");
+const { FacebookPagePlatform, FacebookProfile } = require("../CommonString");
 const { saveConnection } = require("../postUtils");
 
 const facebookloginStrategy = (req, res, next) => {
@@ -78,7 +78,7 @@ const facebookStrategy = (req, res, next) => {
           userId,
           brandId,
           creds.name,
-          FacebookPagePlatform,
+          FacebookProfile,
           0
         )
         if (response.success) {

@@ -1,19 +1,16 @@
 const FacebookService = require("../services/facebookService");
 const UserService = require("../services/userServices");
 const userService = new UserService();
-const {
-  FacebookPagePlatform,
-  InstagramPlatform,
-} = require("../utils/CommonString");
+const { FacebookProfile } = require("../utils/CommonString");
 const facebookService = new FacebookService();
 
 const facebookPages = async (req, res) => {
   try {
     const userId = req.user.id;
-    const brandId = req.query.brandId;
+    const brandId = +req.query.brandId;
     const creds = await userService.getTokenByIdPlatform(
       userId,
-      FacebookPagePlatform,
+      FacebookProfile,
       0,
       brandId
     );
@@ -22,44 +19,45 @@ const facebookPages = async (req, res) => {
     let response = [];
 
     const pageData = await facebookService.getFacebookPages(id, accessToken);
-    if (pageData.success) {
-      for (let page of pageData.data) {
-        await facebookService.setConnection(
-          brandId,
-          page,
-          userId,
-          FacebookPagePlatform,
-          0,
-          page.name
-        );
+    // if (pageData.success) {
+    //   for (let page of pageData.data) {
+    //     await facebookService.setConnection(
+    //       brandId,
+    //       page,
+    //       userId,
+    //       FacebookPagePlatform,
+    //       0,
+    //       page.name
+    //     );
 
-        const instaAccount = await facebookService.getInstagramAccount(
-          page.id,
-          page.access_token
-        );
+    //     const instaAccount = await facebookService.getInstagramAccount(
+    //       page.id,
+    //       page.access_token
+    //     );
+    //     console.log({ instaAccount });
 
-        if (instaAccount.data) {
-          const data = {
-            pageId: page.id,
-            access_token: page.access_token,
-            ...instaAccount.data,
-          };
+    //     if (instaAccount.data) {
+    //       const data = {
+    //         pageId: page.id,
+    //         access_token: page.access_token,
+    //         ...instaAccount.data,
+    //       };
 
-          await facebookService.setConnection(
-            brandId,
-            data,
-            userId,
-            InstagramPlatform,
-            0,
-            instaAccount.data.username
-          );
-        }
+    //       await facebookService.setConnection(
+    //         brandId,
+    //         data,
+    //         userId,
+    //         InstagramPlatform,
+    //         0,
+    //         instaAccount.data.username
+    //       );
+    //     }
 
-        response.push({ id: page.id, name: page.name, profile: page.profile });
-      }
-    }
+    //     response.push({ id: page.id, name: page.name, profile: page.profile });
+    //   }
+    // }
 
-    return res.status(pageData.status).json(response);
+    return res.status(pageData.status).json(pageData.data);
   } catch (err) {
     console.log(err);
   }
@@ -69,17 +67,32 @@ const facebookConnect = async (req, res) => {
   try {
     const userId = req.user?.id;
     const data = req.body;
+    const brandId = +req.query.brandId;
 
-    const response = await facebookService.connectPage(userId, data);
+    const creds = await userService.getTokenByIdPlatform(
+      userId,
+      FacebookProfile,
+      0,
+      brandId
+    );
+    const { accessToken } = creds;
+
+    const response = await facebookService.connectPage(
+      userId,
+      brandId,
+      data,
+      accessToken
+    );
     if (response.success) {
-      return res.status(200).json(response.data);
+      return res.status(200).json({ msg: "connected successfully" });
     } else {
       return res.status(400).json(response.data);
     }
   } catch (err) {
+    console.log(err);
     return res
-      .status(err.response.status ?? 400)
-      .json(err.response.data ?? err);
+      .status(err?.response?.status ?? 400)
+      .json(err?.response?.data ?? err);
   }
 };
 

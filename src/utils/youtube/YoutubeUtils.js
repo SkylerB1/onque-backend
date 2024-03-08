@@ -88,12 +88,17 @@ const YoutubeCategories = async (userId, brandId) => {
       1,
       brandId
     );
-    const { accessToken, refreshToken } = creds;
+    const { accessToken, refreshToken, expiry_date = 0 } = creds;
     oAuth2Client.setCredentials({
       access_token: accessToken,
       refresh_token: refreshToken,
+      expiry_date: expiry_date,
     });
-    await CheckYoutubeToken(creds, userId);
+
+    oAuth2Client.on("tokens", (tokens) => {
+      updateYoutubeToken(creds, tokens, userId, brandId);
+    });
+
     const res = await youtube.videoCategories.list({
       part: ["snippet"],
       regionCode: "GB",
@@ -108,42 +113,32 @@ const YoutubeCategories = async (userId, brandId) => {
   }
 };
 
-const CheckYoutubeToken = async (creds, userId, brandId) => {
-  let { accessToken, refreshToken, ...rest } = creds;
+const updateYoutubeToken = async (creds, tokens, userId, brandId) => {
   try {
-    await oAuth2Client.getTokenInfo(accessToken);
-  } catch (err) {
-    console.log(err.response.data);
-    if (err.response.data.error === "invalid_token") {
-      const data = await oAuth2Client.refreshAccessToken();
-      console.log(data);
-      const { access_token, refresh_token } = data.credentials;
-      accessToken = access_token;
-      refreshToken = refresh_token;
-      const encryptedCreds = encryptToken({
-        accessToken,
-        refreshToken,
-        ...rest,
-      });
-      const res = await updateUserCreds(
-        encryptedCreds,
-        userId,
-        YouTubePlatform,
-        1,
-        brandId
-      );
-      console.log("Creds Update?", res);
+    let { accessToken,refreshToken} = creds;
+    const { access_token, expiry_date } = tokens;
+    accessToken = access_token;
+    expiry_date = expiry_date;
+    const encryptedCreds = encryptToken(creds);
+    const res = await updateUserCreds(
+      encryptedCreds,
+      userId,
+      YouTubePlatform,
+      1,
+      brandId
+    );
+    console.log("Creds Update?", res);
 
-      oAuth2Client.setCredentials({
-        access_token: access_token,
-        refresh_token: refresh_token,
-      });
-    }
+    oAuth2Client.setCredentials({
+      access_token: access_token,
+      refresh_token: refreshToken,
+    });
+  } catch (err) {
+    console.log("updateYoutubeToken", JSON.stringify(err));
   }
 };
 
 module.exports = {
   YoutubeShareVideo,
   YoutubeCategories,
-  CheckYoutubeToken,
 };

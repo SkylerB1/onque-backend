@@ -4,13 +4,8 @@ const { readFileSync } = require("fs");
 const path = require("path");
 const { encryptToken, decryptToken } = require("../middleware/encryptToken");
 const { stringify } = require("querystring");
-const { response } = require("express");
 const { storeCreds } = require("../utils/SocialMediaUtil");
-const { InstagramPlatform } = require("../utils/CommonString");
-const {
-  facebookReelUpload,
-  getReelUploadStatus,
-} = require("../utils/facebook/FacebookUtilFunctions");
+const { InstagramPlatform, FacebookPagePlatform } = require("../utils/CommonString");
 const { buildAPIURL, isReelUploadSuccessful } = require("../utils/instagram");
 const Users = require("../models/Users");
 const UserService = require("../services/userServices");
@@ -62,9 +57,9 @@ class FacebookService {
         isConnected: isConnected,
       };
       const where = {
-        userId: userId,
-        platform: platform,
-        screenName: screenName,
+        userId,
+        brandId,
+        platform,
       };
       return await storeCreds(storeData, where);
     } catch (err) {
@@ -72,40 +67,49 @@ class FacebookService {
     }
   }
 
-  async connectPage(userId, page) {
+  async connectPage(userId, brandId, page, accessToken) {
     const { id, name } = page;
-    const data = {
-      isConnected: 1,
-    };
-    const condition = {
-      userId: userId,
-      screenName: name,
-    };
-
     try {
-      const response = await SocialMediaToken.update(data, {
-        where: condition,
-        returning: true,
-      });
-
-      const accounts = await SocialMediaToken.findAll({
-        where: {
-          userId: userId,
-          platform: InstagramPlatform,
-        },
-      });
-      if (accounts.length > 0) {
-        for (let account of accounts) {
-          const creds = decryptToken(account.credentials);
-          const { pageId } = creds;
-
-          if (pageId === id) {
-            const updateCondition = {
-              id: account.id,
-            };
-            const result = await this.connectInstagram(data, updateCondition);
+      const PAGE_DATA_URL = `https://graph.facebook.com/${id}?fields=id,name,access_token,connected_instagram_account,picture&access_token=${accessToken}`;
+      const response = await axios.get(PAGE_DATA_URL);
+      const { status, data } = response;
+      if (status === 200) {
+        if (data?.connected_instagram_account) {
+          try {
+            const { id } = data.connected_instagram_account;
+            const instaAccount = await this.getInstagramAccount(
+              id,
+              accessToken
+            );
+            if (instaAccount.success) {
+              const { username } = instaAccount.data;
+              const data = {
+                pageId: page.id,
+                access_token: accessToken,
+                ...instaAccount.data,
+              };
+              await this.setConnection(
+                brandId,
+                data,
+                userId,
+                InstagramPlatform,
+                1,
+                username
+              );
+            }
+          } catch (err) {
+            console.log(err)
           }
+           
         }
+        await this.setConnection(
+          brandId,
+          data,
+          userId,
+          FacebookPagePlatform,
+          1,
+          name
+        );
       }
 
       return { success: true, data: response };
@@ -219,7 +223,7 @@ class FacebookService {
       });
       return { status: true, data: response.data };
     } catch (err) {
-      console.log(JSON.stringify(err.response.data));
+      console.log(JSON.stringify(err?.response?.data));
       return { status: false, data: err.response.data };
     }
   }
@@ -293,7 +297,7 @@ class FacebookService {
       const response = await axios.post(url, data);
       return { status: response.status, success: true, data: response.data };
     } catch (err) {
-      console.log(JSON.stringify(err.response.data));
+      console.log(JSON.stringify(err?.response?.data));
       return {
         status: err.response.status,
         success: false,
@@ -302,32 +306,17 @@ class FacebookService {
     }
   }
 
-  async getInstagramAccount(pageId, accessToken) {
+  async getInstagramAccount(instaId, accessToken) {
     try {
-      const ACCOUNT_URL =
+      const URL =
         process.env.FACEBOOK_URL +
-        `${pageId}?fields=instagram_business_account&access_token=${accessToken}`;
+        `${instaId}?fields=id,name,username,profile_picture_url&access_token=${accessToken}`;
 
-      const account = await axios.get(ACCOUNT_URL);
-      const isInstaAccount = account.data.instagram_business_account ?? null;
+      const response = await axios.get(URL);
 
-      if (account.status === 200 && isInstaAccount) {
-        const PROFILE_URL =
-          process.env.FACEBOOK_URL +
-          `${isInstaAccount.id}?fields=id,username,profile_picture_url&access_token=${accessToken}`;
-
-        const profile = await axios.get(PROFILE_URL);
-
-        if (profile.status === 200) {
-          return { success: true, data: profile.data };
-        } else {
-          return { success: false, data: profile.data };
-        }
-      } else {
-        return { success: false, data: isInstaAccount };
-      }
+      return { success: true, data: response.data };
     } catch (err) {
-      console.log(err);
+      console.log('getInstagram',err);
       return { success: true, data: err.response.data };
     }
   }
@@ -351,22 +340,14 @@ class FacebookService {
   }
 
   async getFacebookPages(userId, access_token) {
-    const PAGES_URL = `https://graph.facebook.com/v18.0/${userId}/accounts?access_token=${access_token}`;
-    const pages = [];
+    const PAGES_URL = `https://graph.facebook.com/v18.0/${userId}/accounts?access_token=${access_token}&fields=id,name`;
     try {
       const response = await this.collectAllPages(PAGES_URL);
       const { data } = response;
 
-      for (let page of data) {
-        const PAGE_DATA_URL = `https://graph.facebook.com/${page.id}?fields=picture&access_token=${page.access_token}`;
-        const response = await axios.get(PAGE_DATA_URL);
-        const profile = response.data.picture.data.url;
-        pages.push({ ...page, profile });
-      }
-
       return {
         success: true,
-        data: pages,
+        data: data,
         status: 200,
       };
     } catch (err) {
