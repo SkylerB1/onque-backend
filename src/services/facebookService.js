@@ -5,7 +5,10 @@ const path = require("path");
 const { encryptToken, decryptToken } = require("../middleware/encryptToken");
 const { stringify } = require("querystring");
 const { storeCreds } = require("../utils/SocialMediaUtil");
-const { InstagramPlatform, FacebookPagePlatform } = require("../utils/CommonString");
+const {
+  InstagramPlatform,
+  FacebookPagePlatform,
+} = require("../utils/CommonString");
 const { buildAPIURL, isReelUploadSuccessful } = require("../utils/instagram");
 const Users = require("../models/Users");
 const UserService = require("../services/userServices");
@@ -77,7 +80,7 @@ class FacebookService {
         if (data?.connected_instagram_account) {
           try {
             const { id } = data.connected_instagram_account;
-            const instaAccount = await this.getInstagramAccount(
+            const instaAccount = await this.getInstagramProfile(
               id,
               accessToken
             );
@@ -98,9 +101,8 @@ class FacebookService {
               );
             }
           } catch (err) {
-            console.log(err)
+            console.log(err);
           }
-           
         }
         await this.setConnection(
           brandId,
@@ -118,14 +120,48 @@ class FacebookService {
     }
   }
 
-  async connectInstagram(data, condition) {
+  async connectInstagram(userId, brandId, data, accessToken) {
+    const { id, name, pageId } = data;
     try {
-      const response = await SocialMediaToken.update(data, {
-        where: condition,
-      });
+      const PAGE_DATA_URL = `https://graph.facebook.com/${pageId}?fields=access_token&access_token=${accessToken}`;
+      const response = await axios.get(PAGE_DATA_URL);
+      const { status, data } = response;
+      if (status === 200) {
+        const { access_token } = data;
+        const userData = {
+          id,
+          name,
+          pageId,
+          access_token,
+        };
+        await this.setConnection(
+          brandId,
+          userData,
+          userId,
+          InstagramPlatform,
+          1,
+          name
+        );
+      }
 
       return { success: true, data: response };
     } catch (err) {
+      return { success: false, data: err };
+    }
+  }
+
+  async getInstagramAccounts(accessToken) {
+    try {
+      const URL =
+        process.env.FACEBOOK_URL +
+        `me/accounts?fields=id,name,connected_instagram_account{id,name,username,profile_picture_url}&access_token=${accessToken}`;
+      const response = await this.collectAllPages(URL);
+      const filterPagesWithAccount = response.data.filter(
+        (item) => item.connected_instagram_account
+      );
+      return { success: true, data: filterPagesWithAccount };
+    } catch (err) {
+      console.log(err);
       return { success: false, data: err };
     }
   }
@@ -306,7 +342,7 @@ class FacebookService {
     }
   }
 
-  async getInstagramAccount(instaId, accessToken) {
+  async getInstagramProfile(instaId, accessToken) {
     try {
       const URL =
         process.env.FACEBOOK_URL +
@@ -316,7 +352,7 @@ class FacebookService {
 
       return { success: true, data: response.data };
     } catch (err) {
-      console.log('getInstagram',err);
+      console.log("getInstagram", err);
       return { success: true, data: err.response.data };
     }
   }

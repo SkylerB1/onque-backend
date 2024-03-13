@@ -1,5 +1,4 @@
 const UserService = require("../../services/userServices");
-const moment = require("moment");
 const InstagramService = require("../../services/InstagramService");
 const instagramService = new InstagramService();
 const userService = new UserService();
@@ -14,7 +13,6 @@ const InstagramSharePost = async (
   try {
     const mimetype = data.files[0]?.mimetype ?? null;
     const isVideo = mimetype?.includes("video") ?? false;
-    const isPhoto = mimetype?.includes("image") ?? false;
     const platform = platformType;
 
     const creds = await userService.getTokenByIdPlatform(
@@ -23,8 +21,7 @@ const InstagramSharePost = async (
       1,
       brandId
     );
-    const user_id = creds.id;
-    const access_token = creds.access_token;
+    const { id, access_token } = creds;
     //   const currentTimestamp = moment();
     //   const tokenExpirationTimestamp = moment().add(creds.expires_in, "seconds");
     //   console.log(moment())
@@ -40,23 +37,14 @@ const InstagramSharePost = async (
     let response;
     if (mediaType === "POST") {
       if (data.files.length === 1 && isVideo) {
-        response = await instagramService.shareReel(
-          data,
-          user_id,
-          access_token
-        );
+        response = await instagramService.shareReel(data, id, access_token);
       } else {
-        response = await instagramService.sharePost(
-          data,
-          user_id,
-          access_token,
-          isPhoto
-        );
+        response = await instagramService.sharePost(data, id, access_token);
       }
     } else if (mediaType === "REEL") {
-      response = await instagramService.shareReel(data, user_id, access_token);
+      response = await instagramService.shareReel(data, id, access_token);
     } else if (mediaType === "STORY") {
-      response = await instagramService.shareStory(data, user_id, access_token);
+      response = await instagramService.shareStory(data, id, access_token);
     } else {
       response = { success: "false", data: "Invalid Media Type" };
     }

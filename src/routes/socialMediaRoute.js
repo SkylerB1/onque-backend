@@ -14,11 +14,23 @@ const { verifyToken, createToken } = require("../middleware/auth.middleware");
 const { twitterStrategy, twitterLoginStrategy } = require("../utils/twitter");
 const { youtubeStrategy } = require("../utils/youtube");
 const { googleBusinessStrategy } = require("../utils/google-business");
-const { GoogleBusinessPlatform, FacebookPagePlatform, LinkedInPagePlatform } = require("../utils/CommonString");
+const {
+  GoogleBusinessPlatform,
+  FacebookPagePlatform,
+  LinkedInPagePlatform,
+  InstagramPlatform,
+} = require("../utils/CommonString");
 const { tiktokStrategy } = require("../utils/tiktok");
-const { facebookStrategy, facebookloginStrategy } = require("../utils/facebook");
+const {
+  facebookStrategy,
+  facebookloginStrategy,
+} = require("../utils/facebook");
 const { REDIRECT_URL, LOGIN_REDIRECT_URL } = process.env;
-const { linkdInStrategy, linkdInProfileStrategy } = require("../utils/linkedin");
+const {
+  linkdInStrategy,
+  linkdInProfileStrategy,
+} = require("../utils/linkedin");
+const { instagramStrategy } = require("../utils/instagram/InstagramStrategy");
 
 router.get(
   "/google_business",
@@ -42,7 +54,8 @@ router.get(
   })
 );
 
-router.get("/twitter/login",
+router.get(
+  "/twitter/login",
   twitterLoginStrategy,
   passport.authenticate("twitter", {
     scope: ["tweet.read", "tweet.write", "users.read", "offline.access"],
@@ -55,16 +68,16 @@ router.get(
     failureRedirect: REDIRECT_URL,
   }),
   (req, res) => {
-    const { id } = req.user
-    const { accessToken, refreshToken } = createToken(id)
-    const redirectUrl = LOGIN_REDIRECT_URL
-    res.cookie('refresh_token', refreshToken, { httpOnly: true }).cookie('access_token', accessToken, { httpOnly: true });
+    const { id } = req.user;
+    const { accessToken, refreshToken } = createToken(id);
+    const redirectUrl = LOGIN_REDIRECT_URL;
+    res
+      .cookie("refresh_token", refreshToken, { httpOnly: true })
+      .cookie("access_token", accessToken, { httpOnly: true });
 
-    res.redirect(redirectUrl)
-
+    res.redirect(redirectUrl);
   }
 );
-
 
 router.get(
   "/twitter",
@@ -79,7 +92,7 @@ router.get(
   passport.authenticate("twitter", {
     successRedirect: REDIRECT_URL,
     failureRedirect: REDIRECT_URL,
-  }),
+  })
 );
 
 router.get(
@@ -115,27 +128,31 @@ router.get("/youtube/categories", verifyToken, YoutubeController.getCategories);
 router.get("/get_specific_post_data", UserController.getSpecificPostData);
 
 //linkedin
-router.get('/linkedin/page',
+router.get(
+  "/linkedin/page",
   linkdInStrategy,
-  passport.authenticate('linkedin'),
+  passport.authenticate("linkedin")
 );
 
-router.get('/linkedin/callback',
-  passport.authenticate('linkedin', {
+router.get(
+  "/linkedin/callback",
+  passport.authenticate("linkedin", {
     successRedirect: REDIRECT_URL + `?platform=${LinkedInPagePlatform}`,
     failureRedirect: REDIRECT_URL + `?platform=${LinkedInPagePlatform}`,
   })
 );
 
-router.get('/linkedin/profile',
+router.get(
+  "/linkedin/profile",
   linkdInProfileStrategy,
-  passport.authenticate('linkedin'),
+  passport.authenticate("linkedin")
 );
 
-router.get('/linkedin/profile/callback',
-  passport.authenticate('linkedin', {
+router.get(
+  "/linkedin/profile/callback",
+  passport.authenticate("linkedin", {
     successRedirect: REDIRECT_URL,
-    failureRedirect: REDIRECT_URL 
+    failureRedirect: REDIRECT_URL,
   })
 );
 
@@ -151,41 +168,71 @@ router.post("/linkedin/share", verifyToken, LinkedInController.sharePost);
 router.get(
   "/facebook/login",
   facebookloginStrategy,
-  passport.authenticate(`facebook`, { scope: ['public_profile', 'email'], },
-  ),
+  passport.authenticate(`facebook`, { scope: ["public_profile", "email"] })
 );
 
-router.get('/facebook/login/callback',
-  passport.authenticate('facebook', {
-    failureRedirect: LOGIN_REDIRECT_URL
+router.get(
+  "/facebook/login/callback",
+  passport.authenticate("facebook", {
+    failureRedirect: LOGIN_REDIRECT_URL,
   }),
   (req, res) => {
-    const { id } = req.user.response
-    const { accessToken, refreshToken } = createToken(id)
-    const redirectUrl = LOGIN_REDIRECT_URL
-    res.cookie('refresh_token', refreshToken).cookie('access_token', accessToken);
+    const { id } = req.user.response;
+    const { accessToken, refreshToken } = createToken(id);
+    const redirectUrl = LOGIN_REDIRECT_URL;
+    res
+      .cookie("refresh_token", refreshToken)
+      .cookie("access_token", accessToken);
 
-    res.redirect(redirectUrl)
-
+    res.redirect(redirectUrl);
   }
 );
 
-router.get('/facebook',
+router.get(
+  "/facebook",
   facebookStrategy,
-  passport.authenticate('facebook', { scope: ['public_profile', 'email'], }
-  ),
+  passport.authenticate("facebook", { scope: ["public_profile", "email"] })
 );
 
-router.get('/facebook/callback',
-  passport.authenticate('facebook', {
+
+router.get(
+  "/facebook/callback",
+  passport.authenticate("facebook", {
     successRedirect: REDIRECT_URL + `?platform=${FacebookPagePlatform}`,
     failureRedirect: REDIRECT_URL + `?platform=${FacebookPagePlatform}`,
   })
-)
+);
+
+router.get(
+  "/instagram",
+  instagramStrategy,
+  passport.authenticate("facebook", { scope: ["public_profile", "email"] })
+);
+
+router.get(
+  "/instagram/callback",
+  passport.authenticate("facebook", {
+    successRedirect: REDIRECT_URL + `?platform=${InstagramPlatform}`,
+    failureRedirect: REDIRECT_URL + `?platform=${InstagramPlatform}`,
+  })
+);
 
 router.get("/facebook/pages", verifyToken, FacebookController.facebookPages);
+router.get(
+  "/instagram-business-accounts",
+  verifyToken,
+  FacebookController.instagramAccounts
+);
 router.post(
-  "/facebook/connection", verifyToken, FacebookController.facebookConnect
+  "/facebook/connection",
+  verifyToken,
+  FacebookController.facebookConnect
+);
+
+router.post(
+  "/instagram/connection",
+  verifyToken,
+  FacebookController.instagramConnect
 );
 
 router.post("/setToken", TokenController.setToken);
