@@ -256,7 +256,6 @@ class LinkedInServices {
           "LinkedIn-Version": "202308",
         },
       });
-      console.log(response.headers)
       if (response.status === 201) {
         return { status: true, data: response.headers["x-restli-id"] };
       }
