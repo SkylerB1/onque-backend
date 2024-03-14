@@ -226,46 +226,50 @@ class LinkedInServices {
       return { success: false, data: err };
     }
   }
-  async shareText(data, token) {
+
+  async getOwner(platform, creds) {
+    return platform === LinkedInPlatform
+      ? `urn:li:person:${creds.id}`
+      : `urn:li:organization:${creds.organization_id}`;
+  }
+  async shareText(data, creds, platform) {
+    const { accessToken } = creds;
     const url = process.env.LINKEDIN_SHARE_URL;
     const requestBody = {
-      author: "urn:li:person:tcOHKMvv_5",
+      author: await this.getOwner(platform, creds),
+      commentary: data.caption ?? "",
+      visibility: "PUBLIC",
+      distribution: {
+        feedDistribution: "MAIN_FEED",
+        targetEntities: [],
+        thirdPartyDistributionChannels: [],
+      },
       lifecycleState: "PUBLISHED",
-      specificContent: {
-        "com.linkedin.ugc.ShareContent": {
-          shareCommentary: {
-            text: data.caption ?? "",
-          },
-          shareMediaCategory: "NONE",
-        },
-      },
-      visibility: {
-        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-      },
+      isReshareDisabledByAuthor: false,
     };
 
     try {
       const response = await axios.post(url, requestBody, {
         headers: {
-          Authorization: `Bearer ${token?.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           "X-Restli-Protocol-Version": "2.0.0",
+          "LinkedIn-Version": "202308",
         },
       });
+      console.log(response.headers)
       if (response.status === 201) {
-        return { status: true, data: response.data };
+        return { status: true, data: response.headers["x-restli-id"] };
       }
     } catch (err) {
+      console.log(err.response);
       return { status: false, data: err };
     }
   }
   async shareVideo(data, creds, platform) {
-    const accessToken = creds.accessToken;
+    const { accessToken } = creds;
     const VIDEO_URL =
       process.env.LINKEDIN_URL + "/videos?action=finalizeUpload";
-    const owner =
-      platform === LinkedInPlatform
-        ? `urn:li:person:${creds.id}`
-        : `urn:li:organization:${creds.organization_id}`;
+    const owner = await this.getOwner(platform, creds);
     const file = data?.files[0];
     const fileSize = file.size;
     const fileName = file?.filename;
@@ -334,10 +338,7 @@ class LinkedInServices {
 
   async shareImage(data, creds, platform) {
     const accessToken = creds.accessToken;
-    const owner =
-      platform === LinkedInPlatform
-        ? `urn:li:person:${creds.id}`
-        : `urn:li:organization:${creds.organization_id}`;
+    const owner = await this.getOwner(platform, creds);
 
     const media = [];
     const caption = data?.caption ?? "";

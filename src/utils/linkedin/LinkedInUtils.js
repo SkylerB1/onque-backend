@@ -8,10 +8,15 @@ const userService = new UserService();
 
 const LinkedInSharePost = async (data, platform, userId, brandId) => {
   try {
-    const mimetype = data.files[0].mimetype;
-    const isVideo = mimetype.includes("video");
+    let mimetype, isVideo, isImage;
+    const isFiles = data?.files?.length > 0;
+    if (isFiles) {
+      mimetype = data?.files[0]?.mimetype;
+      isVideo = mimetype?.includes("video");
+      isImage = mimetype?.includes("image");
+    }
 
-    let creds = await userService.getTokenByIdPlatform(
+    const creds = await userService.getTokenByIdPlatform(
       userId,
       platform,
       1,
@@ -29,20 +34,20 @@ const LinkedInSharePost = async (data, platform, userId, brandId) => {
 
     //   }
     let response;
-    if (data.files && !isVideo) {
+    if (isFiles && isImage) {
       response = await linkedInService.shareImage(data, creds, platform);
-    } else if (data.files && isVideo) {
+    } else if (isFiles && isVideo) {
       response = await linkedInService.shareVideo(data, creds, platform);
     } else {
       response = await linkedInService.shareText(data, creds, platform);
     }
+    
     if (response.status) {
       return { success: true, data: response.data };
     } else {
       return { success: false, data: response.data };
     }
   } catch (err) {
-    console.log(err);
     return { success: false, data: response.data };
   }
 };
