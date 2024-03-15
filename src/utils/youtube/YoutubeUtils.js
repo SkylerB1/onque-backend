@@ -42,9 +42,9 @@ const YoutubeShareVideo = async (data, platform, userId, brandId) => {
       access_token: accessToken,
       refresh_token: refreshToken,
     });
-
-    await CheckYoutubeToken(creds, userId);
-
+    oAuth2Client.on("tokens", (tokens) => {
+      updateYoutubeToken(creds, tokens, userId, brandId);
+    });
     const file = files[0];
     const videoPath = path.join(__dirname, `../../../assets/${file?.filename}`);
 
@@ -72,10 +72,10 @@ const YoutubeShareVideo = async (data, platform, userId, brandId) => {
       return { success: true, data: res.data.id };
     } catch (err) {
       console.log(err);
-      console.log(JSON.stringify(err.response.data));
       return { success: false, data: err.response.data };
     }
   } catch (err) {
+    console.log(err);
     return { status: 400, data: err.response.data, success: false };
   }
 };
@@ -89,6 +89,7 @@ const YoutubeCategories = async (userId, brandId) => {
       brandId
     );
     const { accessToken, refreshToken, expiry_date = 0 } = creds;
+    
     oAuth2Client.setCredentials({
       access_token: accessToken,
       refresh_token: refreshToken,
@@ -115,10 +116,12 @@ const YoutubeCategories = async (userId, brandId) => {
 
 const updateYoutubeToken = async (creds, tokens, userId, brandId) => {
   try {
-    let { accessToken,refreshToken} = creds;
+    let { refreshToken } = creds;
     const { access_token, expiry_date } = tokens;
-    accessToken = access_token;
-    expiry_date = expiry_date;
+
+    creds.accessToken = access_token;
+    creds.expiry_date = expiry_date;
+
     const encryptedCreds = encryptToken(creds);
     const res = await updateUserCreds(
       encryptedCreds,
@@ -127,7 +130,7 @@ const updateYoutubeToken = async (creds, tokens, userId, brandId) => {
       1,
       brandId
     );
-    console.log("Creds Update?", res);
+    
 
     oAuth2Client.setCredentials({
       access_token: access_token,
