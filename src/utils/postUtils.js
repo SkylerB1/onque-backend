@@ -294,8 +294,9 @@ const saveConnection = async (
       brandId: brandId,
     };
     const where = {
-      userId: userId,
-      platform: platform,
+      userId,
+      platform,
+      brandId,
     };
     const IsToken = await SocialMediaToken.findOne({
       where: where,

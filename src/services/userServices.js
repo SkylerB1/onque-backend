@@ -86,6 +86,7 @@ class UserService {
         brandId: brandId,
         isConnected: 1,
       },
+      order: [["platform", "ASC"]],
     });
   }
 
@@ -243,8 +244,8 @@ class UserService {
   async findUserByName(name) {
     return await Users.findOne({
       where: {
-        firstName: name
-      }
+        firstName: name,
+      },
     });
   }
 }
