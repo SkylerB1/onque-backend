@@ -24,25 +24,28 @@ const youtubeStrategy = async (req, res, next) => {
         accessType: "offline",
       },
       async function (accessToken, refreshToken, params, profile, cb) {
-        const creds = {
-          accessToken,
-          refreshToken,
-          expiry_date: new Date().getTime() + params.expires_in * 1000,
-          ...profile._json,
-        };
-        const encryptedCreds = encryptToken(creds);
-        const response = await saveConnection(
-          encryptedCreds,
-          userId,
-          brandId,
-          profile.displayName,
-          YouTubePlatform
-        );
-
-        if (response.success) {
-          return cb(null, profile);
+        if (profile._json.items) {
+          const creds = {
+            accessToken,
+            refreshToken,
+            expiry_date: new Date().getTime() + params.expires_in * 1000,
+            ...profile._json,
+          };
+          const encryptedCreds = encryptToken(creds);
+          const response = await saveConnection(
+            encryptedCreds,
+            userId,
+            brandId,
+            profile.displayName,
+            YouTubePlatform
+          );
+          if (response.success) {
+            return cb(null, profile);
+          } else {
+            return cb(response.data);
+          }
         } else {
-          return cb(response.data, null);
+          return cb("No channel found");
         }
       }
     )

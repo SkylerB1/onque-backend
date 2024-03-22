@@ -22,7 +22,13 @@ const tiktokStrategy = (req, res, next) => {
       {
         clientID: TIKTOK_CLIENT_ID,
         clientSecret: TIKTOK_CLIENT_SECRET,
-        scope: ["user.info.basic", "video.publish", "video.upload"],
+        scope: [
+          "user.info.basic",
+          "user.info.profile",
+          "user.info.stats",
+          "video.publish",
+          "video.upload",
+        ],
         callbackURL: TIKTOK_CALLBACK_URL,
       },
       async (token, tokenSecret, params, profile, cb) => {

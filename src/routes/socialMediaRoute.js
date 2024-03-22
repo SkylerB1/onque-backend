@@ -19,6 +19,7 @@ const {
   FacebookPagePlatform,
   LinkedInPagePlatform,
   InstagramPlatform,
+  YouTubePlatform,
 } = require("../utils/CommonString");
 const { tiktokStrategy } = require("../utils/tiktok");
 const {
@@ -46,13 +47,15 @@ router.get(
 );
 
 router.get("/youtube", youtubeStrategy, passport.authenticate("youtube"));
-router.get(
-  "/youtube/callback",
-  passport.authenticate("youtube", {
-    successRedirect: REDIRECT_URL,
-    failureRedirect: REDIRECT_URL,
-  })
-);
+router.get("/youtube/callback", (req, res, next) => {
+  passport.authenticate("youtube", (err, user, info) => {
+    if (err) {
+      res.redirect(`${REDIRECT_URL}?platform=${YouTubePlatform}&error=${err}`);
+    } else {
+      res.redirect(`${REDIRECT_URL}?platform=${YouTubePlatform}`);
+    }
+  })(req, res, next);
+});
 
 router.get(
   "/twitter/login",
@@ -111,7 +114,13 @@ router.get(
   "/tiktok",
   tiktokStrategy,
   passport.authenticate("tiktok", {
-    scope: ["user.info.basic", "video.publish", "video.upload"],
+    scope: [
+      "user.info.basic",
+      "user.info.profile",
+      "user.info.stats",
+      "video.publish",
+      "video.upload",
+    ],
   })
 );
 
@@ -193,7 +202,6 @@ router.get(
   facebookStrategy,
   passport.authenticate("facebook", { scope: ["public_profile", "email"] })
 );
-
 
 router.get(
   "/facebook/callback",
